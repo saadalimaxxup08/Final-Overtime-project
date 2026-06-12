@@ -9,6 +9,7 @@ interface EmployeeProfile {
   emp_id: string;
   name: string;
   email: string;
+  role?: string;
   created_at?: string;
 }
 
@@ -39,21 +40,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const checkAdminStatus = async (email: string): Promise<boolean> => {
+  const checkAdminStatus = async (userId: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase
-        .from('admins')
-        .select('email')
-        .eq('email', email)
+        .from('employees')
+        .select('role')
+        .eq('id', userId)
         .maybeSingle();
 
       if (error) {
-        console.error('Error checking admin status (it is safe if table is empty):', error);
+        console.error('Error checking admin status:', error);
         return false;
       }
-      return !!data;
+      return data?.role === 'admin';
     } catch (err) {
-      console.warn('Admins table check failed (e.g. table empty/not found):', err);
+      console.warn('Admin check failed:', err);
       return false;
     }
   };
@@ -90,11 +91,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const currUser = currSession?.user ?? null;
     setUser(currUser);
 
-    if (currUser && currUser.email) {
-      // Run profile fetch and admin check in parallel
+    if (currUser) {
       const [profResult, adminResult] = await Promise.all([
         fetchProfile(currUser.id),
-        checkAdminStatus(currUser.email),
+        checkAdminStatus(currUser.id),
       ]);
 
       setProfile(profResult);
@@ -107,12 +107,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Check initial session
     supabase.auth.getSession().then(({ data: { session: initSession } }) => {
       handleAuthStateChange(initSession);
     });
 
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       handleAuthStateChange(newSession);
     });
