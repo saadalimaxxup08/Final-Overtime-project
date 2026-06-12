@@ -12,6 +12,12 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: 'Overtime Tracker Pro - Premium Employee Clocking',
   description: 'High-performance glassmorphic overtime logger and check-in system for modern enterprise workspaces.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico?v=3', sizes: 'any' },
+    ],
+    apple: '/apple-touch-icon.png', // optional, future ke liye
+  },
 };
 
 export default function RootLayout({
