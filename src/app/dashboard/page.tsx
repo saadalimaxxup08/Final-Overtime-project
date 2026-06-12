@@ -20,13 +20,11 @@ import {
   Briefcase,
   History,
   Trash2,
-  Pencil,
   Calendar,
   Loader2,
   Download,
   AlertCircle,
   FileText,
-  X,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -49,7 +47,7 @@ export default function DashboardPage() {
 
   // Route protection
   useEffect(() => {
-    if (!loading &&!user) {
+    if (!loading && !user) {
       router.push('/');
     }
   }, [user, loading, router]);
@@ -82,32 +80,24 @@ export default function DashboardPage() {
   const [manualCheckOut, setManualCheckOut] = useState('17:00');
   const [manualNotes, setManualNotes] = useState('');
 
-  // Edit modal states
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingLog, setEditingLog] = useState<OvertimeLog | null>(null);
-  const [editDate, setEditDate] = useState('');
-  const [editCheckIn, setEditCheckIn] = useState('');
-  const [editCheckOut, setEditCheckOut] = useState('');
-  const [editNotes, setEditNotes] = useState('');
-
   // Fetch logs from database
   const fetchLogs = async () => {
     if (!profile) return;
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-       .from('overtime_logs')
-       .select('*')
-       .eq('emp_id', profile.emp_id)
-       .order('date', { ascending: false });
+        .from('overtime_logs')
+        .select('*')
+        .eq('emp_id', profile.emp_id)
+        .order('date', { ascending: false });
 
       if (error) throw error;
-
+      
       const typedLogs = (data || []) as OvertimeLog[];
       setLogs(typedLogs);
 
       // Check for active clock-in (where check_out is null)
-      const active = typedLogs.find((log) =>!log.check_out);
+      const active = typedLogs.find((log) => !log.check_out);
       setActiveLog(active || null);
     } catch (err: any) {
       showToast(err.message || 'Error loading logs.', 'error');
@@ -125,9 +115,9 @@ export default function DashboardPage() {
   // Handle Profile Creation
   const handleCreateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user ||!user.email) return;
+    if (!user || !user.email) return;
 
-    if (!profileName.trim() ||!profileEmpId.trim()) {
+    if (!profileName.trim() || !profileEmpId.trim()) {
       showToast('Please enter both Name and Employee ID.', 'warning');
       return;
     }
@@ -167,8 +157,8 @@ export default function DashboardPage() {
 
       // Insert log
       const { data, error } = await supabase
-       .from('overtime_logs')
-       .insert({
+        .from('overtime_logs')
+        .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -178,8 +168,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-       .select()
-       .single();
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -195,23 +185,23 @@ export default function DashboardPage() {
 
   // Clock Out Action
   const handleClockOut = async () => {
-    if (!profile ||!activeLog) return;
+    if (!profile || !activeLog) return;
     setActionLoading(true);
     try {
       const nowIso = dayjs().toISOString();
       const checkInIso = activeLog.check_in!;
-
+      
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-       .from('overtime_logs')
-       .update({
+        .from('overtime_logs')
+        .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim() || null,
         })
-       .eq('id', activeLog.id);
+        .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -278,68 +268,15 @@ export default function DashboardPage() {
   // Delete log entry
   const handleDeleteLog = async (id: string) => {
     if (!confirm('Are you sure you want to delete this log?')) return;
-
+    
     try {
       const { error } = await supabase.from('overtime_logs').delete().eq('id', id);
       if (error) throw error;
-
+      
       showToast('Log deleted successfully.', 'success');
       fetchLogs();
     } catch (err: any) {
       showToast(err.message || 'Error deleting log.', 'error');
-    }
-  };
-
-  // Open Edit Modal
-  const handleOpenEdit = (log: OvertimeLog) => {
-    setEditingLog(log);
-    setEditDate(log.date);
-    setEditCheckIn(log.check_in? dayjs(log.check_in).format('HH:mm') : '');
-    setEditCheckOut(log.check_out? dayjs(log.check_out).format('HH:mm') : '');
-    setEditNotes(log.notes || '');
-    setEditModalOpen(true);
-  };
-
-  // Submit Edit
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingLog ||!profile) return;
-
-    // Combine date + time
-    const checkInDateTime = dayjs(`${editDate}T${editCheckIn}`).toISOString();
-    const checkOutDateTime = dayjs(`${editDate}T${editCheckOut}`).toISOString();
-
-    if (dayjs(checkOutDateTime).isBefore(dayjs(checkInDateTime))) {
-      showToast('Check-out time must be after check-in time.', 'error');
-      return;
-    }
-
-    setActionLoading(true);
-    try {
-      const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
-
-      const { error } = await supabase
-       .from('overtime_logs')
-       .update({
-          date: editDate,
-          check_in: checkInDateTime,
-          check_out: checkOutDateTime,
-          total_hours: totalHours,
-          overtime_hours: overtimeHours,
-          notes: editNotes.trim() || null,
-        })
-       .eq('id', editingLog.id);
-
-      if (error) throw error;
-
-      showToast('Log updated successfully!', 'success');
-      setEditModalOpen(false);
-      setEditingLog(null);
-      fetchLogs();
-    } catch (err: any) {
-      showToast(err.message || 'Error updating log.', 'error');
-    } finally {
-      setActionLoading(false);
     }
   };
 
@@ -349,9 +286,9 @@ export default function DashboardPage() {
       showToast('No log data available to export.', 'warning');
       return;
     }
-
+    
     // Pass only completed logs to PDF
-    const completedLogs = logs.filter(l => l.check_out!== null);
+    const completedLogs = logs.filter(l => l.check_out !== null);
     if (completedLogs.length === 0) {
       showToast('No completed logs to download.', 'warning');
       return;
@@ -369,7 +306,7 @@ export default function DashboardPage() {
   const totalLogs = logs.filter(l => l.check_out).length;
   const totalHours = logs.reduce((sum, log) => sum + Number(log.total_hours || 0), 0);
   const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
-  const avgHours = totalLogs > 0? (totalHours / totalLogs).toFixed(2) : '0.00';
+  const avgHours = totalLogs > 0 ? (totalHours / totalLogs).toFixed(2) : '0.00';
 
   if (loading) {
     return (
@@ -383,12 +320,12 @@ export default function DashboardPage() {
   }
 
   // PROFILE GUARD: If user has no employee entry, they must fill it in first.
-  if (user &&!profile) {
+  if (user && !profile) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-[#060911]">
         <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-violet-500/10 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none" />
-
+        
         <div className="w-full max-w-md relative z-10">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-extrabold tracking-tight text-white">
@@ -441,7 +378,7 @@ export default function DashboardPage() {
                 disabled={profileSaving}
                 className="w-full flex items-center justify-center gap-2 py-3 mt-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-sm transition-all duration-300 shadow-[0_0_15px_rgba(139,92,246,0.2)] hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] disabled:opacity-50 transform hover:scale-[1.01]"
               >
-                {profileSaving? (
+                {profileSaving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   'Save & Continue'
@@ -458,104 +395,8 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#060911] flex flex-col">
       <Navbar />
 
-      {/* Edit Modal */}
-      {editModalOpen && editingLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <GlassCard className="w-full max-w-lg p-6 relative">
-            <button
-              onClick={() => setEditModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            <h2 className="text-xl font-bold text-slate-200 mb-6 flex items-center gap-2">
-              <Pencil className="h-5 w-5 text-cyan-400" />
-              Edit Log Entry
-            </h2>
-
-            <form onSubmit={handleEditSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5" /> Date
-                </label>
-                <input
-                  type="date"
-                  value={editDate}
-                  onChange={(e) => setEditDate(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-cyan-500/50 transition-all text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Check-in Time
-                  </label>
-                  <input
-                    type="time"
-                    value={editCheckIn}
-                    onChange={(e) => setEditCheckIn(e.target.value)}
-                    required
-                    className="w-full px-4 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-cyan-500/50 transition-all text-sm"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Check-out Time
-                  </label>
-                  <input
-                    type="time"
-                    value={editCheckOut}
-                    onChange={(e) => setEditCheckOut(e.target.value)}
-                    required
-                    className="w-full px-4 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-cyan-500/50 transition-all text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Notes
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Task overview..."
-                  value={editNotes}
-                  onChange={(e) => setEditNotes(e.target.value)}
-                  className="w-full px-4 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-semibold text-sm transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white font-bold text-sm transition-all duration-300 shadow-[0_0_15px_rgba(6,182,212,0.2)] disabled:opacity-50"
-                >
-                  {actionLoading? (
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                  ) : (
-                    'Update Log'
-                  )}
-                </button>
-              </div>
-            </form>
-          </GlassCard>
-        </div>
-      )}
-
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
+        
         {/* Top welcome banner */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/5 pb-6">
           <div>
@@ -566,7 +407,7 @@ export default function DashboardPage() {
               Verify logs, check work status and export invoices.
             </p>
           </div>
-
+          
           <div className="flex items-center gap-3">
             <span className="text-slate-400 text-sm font-medium">Local time:</span>
             <div className="px-4 py-2 rounded-xl bg-slate-900/60 border border-white/10 text-cyan-400 font-bold text-sm glow-text-cyan flex items-center gap-2">
@@ -629,12 +470,12 @@ export default function DashboardPage() {
                   <Clock className="h-5 w-5 text-cyan-400" />
                   Clock Puncher
                 </h2>
-                <span className={`h-2.5 w-2.5 rounded-full ${activeLog? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                <span className={`h-2.5 w-2.5 rounded-full ${activeLog ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
               </div>
 
               <div className="text-center py-6">
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Current Punch Status</p>
-                {activeLog? (
+                {activeLog ? (
                   <div className="mt-2">
                     <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
                       CLOCKED IN
@@ -670,13 +511,13 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {activeLog? (
+              {activeLog ? (
                 <button
                   onClick={handleClockOut}
                   disabled={actionLoading}
                   className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.2)] cursor-pointer"
                 >
-                  {actionLoading? (
+                  {actionLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
@@ -690,7 +531,7 @@ export default function DashboardPage() {
                   disabled={actionLoading}
                   className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.2)] cursor-pointer"
                 >
-                  {actionLoading? (
+                  {actionLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
@@ -770,7 +611,7 @@ export default function DashboardPage() {
                   disabled={actionLoading}
                   className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm transition-all duration-300 shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50 transform hover:scale-[1.01] cursor-pointer"
                 >
-                  {actionLoading? (
+                  {actionLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     'Add Log Entry'
@@ -788,7 +629,7 @@ export default function DashboardPage() {
               <History className="h-5 w-5 text-indigo-400" />
               Clocking & Overtime History
             </h2>
-
+            
             {logs.length > 0 && (
               <button
                 onClick={handleDownloadPDF}
@@ -800,12 +641,12 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {logsLoading? (
+          {logsLoading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
               <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
               <span className="text-sm">Retrieving clock records...</span>
             </div>
-          ) : logs.length === 0? (
+          ) : logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <FileText className="h-12 w-12 text-slate-600 mb-4" />
               <h3 className="font-semibold text-slate-300">No shift records found</h3>
@@ -830,10 +671,10 @@ export default function DashboardPage() {
                 <tbody className="divide-y divide-white/5 text-sm text-slate-300">
                   {logs.map((log) => {
                     const checkInStr = log.check_in
-                     ? dayjs(log.check_in).format('hh:mm A')
+                      ? dayjs(log.check_in).format('hh:mm A')
                       : '-';
                     const checkOutStr = log.check_out
-                     ? dayjs(log.check_out).format('hh:mm A')
+                      ? dayjs(log.check_out).format('hh:mm A')
                       : (
                         <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-semibold animate-pulse border border-emerald-500/20">
                           Active Shift
@@ -841,3 +682,37 @@ export default function DashboardPage() {
                       );
 
                     return (
+                      <tr key={log.id} className="hover:bg-white/[0.02] transition-all duration-150">
+                        <td className="py-4 font-medium">{dayjs(log.date).format('YYYY-MM-DD')}</td>
+                        <td className="py-4">{checkInStr}</td>
+                        <td className="py-4">{checkOutStr}</td>
+                        <td className="py-4 text-right font-medium">
+                          {log.check_out ? `${Number(log.total_hours).toFixed(2)}h` : '-'}
+                        </td>
+                        <td className={`py-4 text-right font-semibold ${log.overtime_hours > 0 ? 'text-cyan-400 glow-text-cyan' : 'text-slate-400'}`}>
+                          {log.check_out ? `${Number(log.overtime_hours).toFixed(2)}h` : '-'}
+                        </td>
+                        <td className="py-4 pl-6 text-slate-400 max-w-xs truncate" title={log.notes || ''}>
+                          {log.notes || '-'}
+                        </td>
+                        <td className="py-4 text-right">
+                          <button
+                            onClick={() => handleDeleteLog(log.id)}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer"
+                            title="Delete Log"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </GlassCard>
+      </main>
+    </div>
+  );
+}
