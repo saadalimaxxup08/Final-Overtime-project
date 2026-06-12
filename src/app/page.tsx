@@ -110,10 +110,10 @@ export default function LoginPage() {
             Overtime Tracker Pro
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-            Enterprise Clocking
+            Count Your Efforts
           </h1>
           <p className="text-slate-400 mt-2 text-sm">
-            Log, calculate and manage overtime with VIP interface
+            Track your time, maximize your earnings
           </p>
         </div>
 
@@ -252,6 +252,11 @@ export default function LoginPage() {
             </form>
           )}
         </GlassCard>
+      </div>
+
+      {/* Developer Credit */}
+      <div className="absolute bottom-4 right-4 text-xs text-slate-500/80 tracking-wide">
+        Developed by: Saad Mushtaq
       </div>
     </div>
   );
