@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -479,27 +478,7 @@ export default function DashboardPage() {
                 {activeLog ? (
                   <div className="mt-2">
                     <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-  const [timer, setTimer] = useState("00:00:00");
-  useEffect(() => {
-    if (status === "CLOCKED IN" && startTime) {
-      <div className="text-center my-3">
-        <p className="text-3xl font-mono text-green-400 font-bold">{timer}</p>
-      </div>
-      const interval = setInterval(() => {
-        const diff = new Date() - new Date(startTime);
-        const h = Math.floor(diff / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        setTimer(`${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`);
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [status, startTime]);
-
                       CLOCKED IN
-      <div className="text-center my-3">
-        <p className="text-3xl font-mono text-green-400 font-bold">{timer}</p>
-      </div>
                     </span>
                     <p className="text-slate-300 text-sm mt-3">
                       Punch started at {dayjs(activeLog.check_in).format('hh:mm A')}
