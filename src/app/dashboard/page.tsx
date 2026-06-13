@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
   // Route protection
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading &&!user) {
       router.push('/');
     }
   }, [user, loading, router]);
@@ -86,18 +86,18 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('overtime_logs')
-        .select('*')
-        .eq('emp_id', profile.emp_id)
-        .order('date', { ascending: false });
+       .from('overtime_logs')
+       .select('*')
+       .eq('emp_id', profile.emp_id)
+       .order('date', { ascending: false });
 
       if (error) throw error;
-      
+
       const typedLogs = (data || []) as OvertimeLog[];
       setLogs(typedLogs);
 
       // Check for active clock-in (where check_out is null)
-      const active = typedLogs.find((log) => !log.check_out);
+      const active = typedLogs.find((log) =>!log.check_out);
       setActiveLog(active || null);
     } catch (err: any) {
       showToast(err.message || 'Error loading logs.', 'error');
@@ -115,9 +115,9 @@ export default function DashboardPage() {
   // Handle Profile Creation
   const handleCreateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !user.email) return;
+    if (!user ||!user.email) return;
 
-    if (!profileName.trim() || !profileEmpId.trim()) {
+    if (!profileName.trim() ||!profileEmpId.trim()) {
       showToast('Please enter both Name and Employee ID.', 'warning');
       return;
     }
@@ -157,8 +157,8 @@ export default function DashboardPage() {
 
       // Insert log
       const { data, error } = await supabase
-        .from('overtime_logs')
-        .insert({
+       .from('overtime_logs')
+       .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -168,8 +168,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-        .select()
-        .single();
+       .select()
+       .single();
 
       if (error) throw error;
 
@@ -185,23 +185,23 @@ export default function DashboardPage() {
 
   // Clock Out Action
   const handleClockOut = async () => {
-    if (!profile || !activeLog) return;
+    if (!profile ||!activeLog) return;
     setActionLoading(true);
     try {
       const nowIso = dayjs().toISOString();
       const checkInIso = activeLog.check_in!;
-      
+
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-        .from('overtime_logs')
-        .update({
+       .from('overtime_logs')
+       .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim() || null,
         })
-        .eq('id', activeLog.id);
+       .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -268,11 +268,11 @@ export default function DashboardPage() {
   // Delete log entry
   const handleDeleteLog = async (id: string) => {
     if (!confirm('Are you sure you want to delete this log?')) return;
-    
+
     try {
       const { error } = await supabase.from('overtime_logs').delete().eq('id', id);
       if (error) throw error;
-      
+
       showToast('Log deleted successfully.', 'success');
       fetchLogs();
     } catch (err: any) {
@@ -286,9 +286,9 @@ export default function DashboardPage() {
       showToast('No log data available to export.', 'warning');
       return;
     }
-    
+
     // Pass only completed logs to PDF
-    const completedLogs = logs.filter(l => l.check_out !== null);
+    const completedLogs = logs.filter(l => l.check_out!== null);
     if (completedLogs.length === 0) {
       showToast('No completed logs to download.', 'warning');
       return;
@@ -306,7 +306,7 @@ export default function DashboardPage() {
   const totalLogs = logs.filter(l => l.check_out).length;
   const totalHours = logs.reduce((sum, log) => sum + Number(log.total_hours || 0), 0);
   const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
-  const avgHours = totalLogs > 0 ? (totalHours / totalLogs).toFixed(2) : '0.00';
+  const avgHours = totalLogs > 0? (totalHours / totalLogs).toFixed(2) : '0.00';
 
   if (loading) {
     return (
@@ -320,12 +320,12 @@ export default function DashboardPage() {
   }
 
   // PROFILE GUARD: If user has no employee entry, they must fill it in first.
-  if (user && !profile) {
+  if (user &&!profile) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-[#060911]">
         <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-violet-500/10 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none" />
-        
+
         <div className="w-full max-w-md relative z-10">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-extrabold tracking-tight text-white">
@@ -378,7 +378,7 @@ export default function DashboardPage() {
                 disabled={profileSaving}
                 className="w-full flex items-center justify-center gap-2 py-3 mt-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-sm transition-all duration-300 shadow-[0_0_15px_rgba(139,92,246,0.2)] hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] disabled:opacity-50 transform hover:scale-[1.01]"
               >
-                {profileSaving ? (
+                {profileSaving? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   'Save & Continue'
@@ -396,18 +396,31 @@ export default function DashboardPage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
-        {/* Top welcome banner */}
+
+        {/* Top welcome banner - UPDATED WITH NAME + ID */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/5 pb-6">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-white">
               Welcome Back, <span className="gradient-text">{profile?.name}</span>
             </h1>
-            <p className="text-slate-400 text-sm mt-1">
+
+            {/* Ye naya add kiya hai - Name + ID */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+              <div className="flex items-center gap-1.5 text-sm">
+                <span className="text-slate-500">Name:</span>
+                <span className="text-cyan-400 font-semibold">{profile?.name}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-sm">
+                <span className="text-slate-500">Employee ID:</span>
+                <span className="text-violet-400 font-semibold">{profile?.emp_id}</span>
+              </div>
+            </div>
+
+            <p className="text-slate-400 text-sm mt-3">
               Verify logs, check work status and export invoices.
             </p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <span className="text-slate-400 text-sm font-medium">Local time:</span>
             <div className="px-4 py-2 rounded-xl bg-slate-900/60 border border-white/10 text-cyan-400 font-bold text-sm glow-text-cyan flex items-center gap-2">
@@ -470,12 +483,12 @@ export default function DashboardPage() {
                   <Clock className="h-5 w-5 text-cyan-400" />
                   Clock Puncher
                 </h2>
-                <span className={`h-2.5 w-2.5 rounded-full ${activeLog ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                <span className={`h-2.5 w-2.5 rounded-full ${activeLog? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
               </div>
 
               <div className="text-center py-6">
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Current Punch Status</p>
-                {activeLog ? (
+                {activeLog? (
                   <div className="mt-2">
                     <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
                       CLOCKED IN
@@ -511,13 +524,13 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {activeLog ? (
+              {activeLog? (
                 <button
                   onClick={handleClockOut}
                   disabled={actionLoading}
                   className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.2)] cursor-pointer"
                 >
-                  {actionLoading ? (
+                  {actionLoading? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
@@ -531,7 +544,7 @@ export default function DashboardPage() {
                   disabled={actionLoading}
                   className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.2)] cursor-pointer"
                 >
-                  {actionLoading ? (
+                  {actionLoading? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
@@ -543,170 +556,173 @@ export default function DashboardPage() {
             </div>
           </GlassCard>
 
-          {/* Card 2: Manual Logger */}
-          <GlassCard hoverGlow glowColor="violet" className="lg:col-span-2">
-            <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
-              <h2 className="font-bold text-lg text-slate-200 flex items-center gap-2">
-                <PlusCircle className="h-5 w-5 text-violet-400" />
-                Manual Log Entry
-              </h2>
-            </div>
+          {/* Card 2: Manual Entry */}
+          <GlassCard hoverGlow glowColor="violet" className="lg:col-span-1">
+            <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
+              <PlusCircle className="h-5 w-5 text-violet-400" />
+              Manual Log Entry
+            </h2>
 
-            <form onSubmit={handleManualSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5" /> Date
+            <form onSubmit={handleManualSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Date
                 </label>
                 <input
                   type="date"
                   value={manualDate}
                   onChange={(e) => setManualDate(e.target.value)}
                   required
-                  className="w-full px-4 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 transition-all text-sm"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 text-xs"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Check In
+                  </label>
+                  <input
+                    type="time"
+                    value={manualCheckIn}
+                    onChange={(e) => setManualCheckIn(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Check Out
+                  </label>
+                  <input
+                    type="time"
+                    value={manualCheckOut}
+                    onChange={(e) => setManualCheckOut(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 text-xs"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Check-in Time
+                  Notes (Optional)
                 </label>
-                <input
-                  type="time"
-                  value={manualCheckIn}
-                  onChange={(e) => setManualCheckIn(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 transition-all text-sm"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Check-out Time
-                </label>
-                <input
-                  type="time"
-                  value={manualCheckOut}
-                  onChange={(e) => setManualCheckOut(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 transition-all text-sm"
-                />
-              </div>
-
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Notes
-                </label>
-                <input
-                  type="text"
-                  placeholder="Task overview (e.g. Server Migration, Client meeting)"
+                <textarea
+                  rows={2}
+                  placeholder="Work details..."
                   value={manualNotes}
                   onChange={(e) => setManualNotes(e.target.value)}
-                  className="w-full px-4 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-violet-500/50 transition-all text-sm"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-violet-500/50 text-xs"
                 />
               </div>
 
-              <div className="md:col-span-2 pt-2">
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-sm transition-all duration-300 shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50 transform hover:scale-[1.01] cursor-pointer"
-                >
-                  {actionLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    'Add Log Entry'
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={actionLoading}
+                className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(139,92,246,0.2)] cursor-pointer"
+              >
+                {actionLoading? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <PlusCircle className="h-4 w-4" /> Add Manual Log
+                  </>
+                )}
+              </button>
             </form>
+          </GlassCard>
+
+          {/* Card 3: Export */}
+          <GlassCard hoverGlow glowColor="emerald" className="lg:col-span-1 flex flex-col justify-between">
+            <div>
+              <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
+                <Download className="h-5 w-5 text-emerald-400" />
+                Export Data
+              </h2>
+
+              <div className="py-4">
+                <p className="text-slate-400 text-sm">
+                  Download all your completed overtime logs as a professional PDF report with totals and breakdown.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleDownloadPDF}
+              disabled={logsLoading || logs.filter(l => l.check_out).length === 0}
+              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.2)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FileText className="h-4 w-4" /> Download PDF Report
+            </button>
           </GlassCard>
         </div>
 
-        {/* Bottom table area */}
-        <GlassCard className="w-full">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-white/5 pb-4 mb-4 gap-4">
+        {/* Bottom: Log History */}
+        <GlassCard>
+          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
             <h2 className="font-bold text-lg text-slate-200 flex items-center gap-2">
-              <History className="h-5 w-5 text-indigo-400" />
-              Clocking & Overtime History
+              <History className="h-5 w-5 text-pink-400" />
+              Log History
             </h2>
-            
-            {logs.length > 0 && (
-              <button
-                onClick={handleDownloadPDF}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-slate-200 transition-all cursor-pointer"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Export PDF Invoice
-              </button>
-            )}
+            <span className="text-xs text-slate-500">{logs.length} entries</span>
           </div>
 
-          {logsLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
-              <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
-              <span className="text-sm">Retrieving clock records...</span>
+          {logsLoading? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
             </div>
-          ) : logs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <FileText className="h-12 w-12 text-slate-600 mb-4" />
-              <h3 className="font-semibold text-slate-300">No shift records found</h3>
-              <p className="text-slate-500 text-sm max-w-xs mt-1">
-                You haven't recorded any clock sessions or manual entries yet.
-              </p>
+          ) : logs.length === 0? (
+            <div className="text-center py-8 text-slate-500 text-sm">
+              No logs found. Start by clocking in or adding a manual entry.
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[600px]">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/10 text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                    <th className="pb-3 pt-2">Date</th>
-                    <th className="pb-3 pt-2">Clock In</th>
-                    <th className="pb-3 pt-2">Clock Out</th>
-                    <th className="pb-3 pt-2 text-right">Total Hours</th>
-                    <th className="pb-3 pt-2 text-right">Overtime Hours</th>
-                    <th className="pb-3 pt-2 pl-6">Notes</th>
-                    <th className="pb-3 pt-2 text-right">Action</th>
+                  <tr className="text-slate-400 text-xs uppercase border-b border-white/5">
+                    <th className="text-left py-3 px-2">Date</th>
+                    <th className="text-left py-3 px-2">Check In</th>
+                    <th className="text-left py-3 px-2">Check Out</th>
+                    <th className="text-left py-3 px-2">Total</th>
+                    <th className="text-left py-3 px-2">Overtime</th>
+                    <th className="text-left py-3 px-2">Notes</th>
+                    <th className="text-right py-3 px-2">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-sm text-slate-300">
-                  {logs.map((log) => {
-                    const checkInStr = log.check_in
-                      ? dayjs(log.check_in).format('hh:mm A')
-                      : '-';
-                    const checkOutStr = log.check_out
-                      ? dayjs(log.check_out).format('hh:mm A')
-                      : (
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-semibold animate-pulse border border-emerald-500/20">
-                          Active Shift
-                        </span>
-                      );
-
-                    return (
-                      <tr key={log.id} className="hover:bg-white/[0.02] transition-all duration-150">
-                        <td className="py-4 font-medium">{dayjs(log.date).format('YYYY-MM-DD')}</td>
-                        <td className="py-4">{checkInStr}</td>
-                        <td className="py-4">{checkOutStr}</td>
-                        <td className="py-4 text-right font-medium">
-                          {log.check_out ? `${Number(log.total_hours).toFixed(2)}h` : '-'}
-                        </td>
-                        <td className={`py-4 text-right font-semibold ${log.overtime_hours > 0 ? 'text-cyan-400 glow-text-cyan' : 'text-slate-400'}`}>
-                          {log.check_out ? `${Number(log.overtime_hours).toFixed(2)}h` : '-'}
-                        </td>
-                        <td className="py-4 pl-6 text-slate-400 max-w-xs truncate" title={log.notes || ''}>
-                          {log.notes || '-'}
-                        </td>
-                        <td className="py-4 text-right">
-                          <button
-                            onClick={() => handleDeleteLog(log.id)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer"
-                            title="Delete Log"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                <tbody>
+                  {logs.map((log) => (
+                    <tr key={log.id} className="border-b border-white/5 hover:bg-slate-900/30 transition-colors">
+                      <td className="py-3 px-2 text-slate-300">
+                        {dayjs(log.date).format('DD MMM YYYY')}
+                      </td>
+                      <td className="py-3 px-2 text-slate-300">
+                        {log.check_in? dayjs(log.check_in).format('hh:mm A') : '-'}
+                      </td>
+                      <td className="py-3 px-2 text-slate-300">
+                        {log.check_out? dayjs(log.check_out).format('hh:mm A') : (
+                          <span className="text-emerald-400 text-xs font-semibold">Active</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-2 text-slate-300 font-semibold">
+                        {log.total_hours.toFixed(2)}h
+                      </td>
+                      <td className="py-3 px-2 text-emerald-400 font-semibold">
+                        {log.overtime_hours.toFixed(2)}h
+                      </td>
+                      <td className="py-3 px-2 text-slate-400 text-xs max-w-xs truncate">
+                        {log.notes || '-'}
+                      </td>
+                      <td className="py-3 px-2 text-right">
+                        <button
+                          onClick={() => handleDeleteLog(log.id)}
+                          className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
