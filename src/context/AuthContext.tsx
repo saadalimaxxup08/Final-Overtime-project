@@ -45,10 +45,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkAdminStatus = async (userId: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase
-       .from('employees')
-       .select('role')
-       .eq('id', userId)
-       .maybeSingle();
+      .from('employees')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle();
 
       if (error) {
         console.error('Error checking admin status:', error);
@@ -64,10 +64,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = async (userId: string): Promise<EmployeeProfile | null> => {
     try {
       const { data, error } = await supabase
-       .from('employees')
-       .select('*')
-       .eq('id', userId)
-       .maybeSingle();
+      .from('employees')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
 
       if (error) {
         console.error('Error fetching employee profile:', error);
@@ -104,15 +104,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(null);
       setIsAdmin(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
-    // FIX: Pehle session load karo, phir listener lagao
     const initAuth = async () => {
-      setLoading(true);
       const { data: { session: initSession } } = await supabase.auth.getSession();
       await handleAuthStateChange(initSession);
-      setLoading(false);
     };
 
     initAuth();
