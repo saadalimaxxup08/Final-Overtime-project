@@ -20,11 +20,11 @@ import {
   Briefcase,
   History,
   Trash2,
-  Calendar,
   Loader2,
   Download,
   AlertCircle,
   FileText,
+  X,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -45,14 +45,12 @@ export default function DashboardPage() {
   const { showToast } = useToast();
   const router = useRouter();
 
-  // Route protection
   useEffect(() => {
     if (!loading &&!user) {
       router.push('/');
     }
   }, [user, loading, router]);
 
-  // Clock state
   const [currentTime, setCurrentTime] = useState('');
   useEffect(() => {
     setCurrentTime(dayjs().format('hh:mm:ss A'));
@@ -62,25 +60,53 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Profile setup states
   const [profileName, setProfileName] = useState('');
   const [profileEmpId, setProfileEmpId] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
 
-  // Dashboard logs and clock-in states
   const [logs, setLogs] = useState<OvertimeLog[]>([]);
   const [activeLog, setActiveLog] = useState<OvertimeLog | null>(null);
   const [logsLoading, setLogsLoading] = useState(true);
   const [clockNotes, setClockNotes] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
 
-  // Manual entry states
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
   const [manualDate, setManualDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [manualCheckIn, setManualCheckIn] = useState('09:00');
   const [manualCheckOut, setManualCheckOut] = useState('17:00');
   const [manualNotes, setManualNotes] = useState('');
 
-  // Fetch logs from database
+  useEffect(() => {
+    if (activeLog && activeLog.check_in) {
+      const startTime = dayjs(activeLog.check_in);
+      timerRef.current = setInterval(() => {
+        const now = dayjs();
+        const diff = now.diff(startTime, 'second');
+        setElapsedTime(diff);
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setElapsedTime(0);
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [activeLog]);
+
+  const formatStopwatch = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
   const fetchLogs = async () => {
     if (!profile) return;
     setLogsLoading(true);
@@ -96,7 +122,6 @@ export default function DashboardPage() {
       const typedLogs = (data || []) as OvertimeLog[];
       setLogs(typedLogs);
 
-      // Check for active clock-in (where check_out is null)
       const active = typedLogs.find((log) =>!log.check_out);
       setActiveLog(active || null);
     } catch (err: any) {
@@ -112,7 +137,6 @@ export default function DashboardPage() {
     }
   }, [profile]);
 
-  // Handle Profile Creation
   const handleCreateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user ||!user.email) return;
@@ -147,7 +171,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Clock In Action
   const handleClockIn = async () => {
     if (!profile) return;
     setActionLoading(true);
@@ -155,7 +178,6 @@ export default function DashboardPage() {
       const todayStr = dayjs().format('YYYY-MM-DD');
       const nowIso = dayjs().toISOString();
 
-      // Insert log
       const { data, error } = await supabase
        .from('overtime_logs')
        .insert({
@@ -183,7 +205,18 @@ export default function DashboardPage() {
     }
   };
 
-  // Clock Out Action
+  const handleClockOutClick = () => {
+    if (!activeLog) return;
+
+    if (!clockNotes.trim()) {
+      setShowNotesModal(true);
+      showToast('Please add notes before clocking out', 'warning');
+      return;
+    }
+
+    handleClockOut();
+  };
+
   const handleClockOut = async () => {
     if (!profile ||!activeLog) return;
     setActionLoading(true);
@@ -199,13 +232,12 @@ export default function DashboardPage() {
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
-          notes: clockNotes.trim() || null,
+          notes: clockNotes.trim(),
         })
        .eq('id', activeLog.id);
 
       if (error) throw error;
 
-      // Confetti celebration
       confetti({
         particleCount: 120,
         spread: 80,
@@ -216,6 +248,7 @@ export default function DashboardPage() {
       showToast('Clocked out successfully!', 'success');
       setClockNotes('');
       setActiveLog(null);
+      setShowNotesModal(false);
       fetchLogs();
     } catch (err: any) {
       showToast(err.message || 'Error clocking out.', 'error');
@@ -224,12 +257,10 @@ export default function DashboardPage() {
     }
   };
 
-  // Manual Log Submission
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
 
-    // Combine date + time
     const checkInDateTime = dayjs(`${manualDate}T${manualCheckIn}`).toISOString();
     const checkOutDateTime = dayjs(`${manualDate}T${manualCheckOut}`).toISOString();
 
@@ -265,7 +296,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Delete log entry
   const handleDeleteLog = async (id: string) => {
     if (!confirm('Are you sure you want to delete this log?')) return;
 
@@ -280,14 +310,12 @@ export default function DashboardPage() {
     }
   };
 
-  // Generate User PDF
   const handleDownloadPDF = () => {
     if (!profile || logs.length === 0) {
       showToast('No log data available to export.', 'warning');
       return;
     }
 
-    // Pass only completed logs to PDF
     const completedLogs = logs.filter(l => l.check_out!== null);
     if (completedLogs.length === 0) {
       showToast('No completed logs to download.', 'warning');
@@ -302,7 +330,6 @@ export default function DashboardPage() {
     showToast('PDF exported successfully!', 'success');
   };
 
-  // Calc Statistics
   const totalLogs = logs.filter(l => l.check_out).length;
   const totalHours = logs.reduce((sum, log) => sum + Number(log.total_hours || 0), 0);
   const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
@@ -319,7 +346,6 @@ export default function DashboardPage() {
     );
   }
 
-  // PROFILE GUARD: If user has no employee entry, they must fill it in first.
   if (user &&!profile) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-[#060911]">
@@ -397,14 +423,12 @@ export default function DashboardPage() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-        {/* Top welcome banner - UPDATED WITH NAME + ID */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/5 pb-6">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-white">
               Welcome Back, <span className="gradient-text">{profile?.name}</span>
             </h1>
 
-            {/* Ye naya add kiya hai - Name + ID */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
               <div className="flex items-center gap-1.5 text-sm">
                 <span className="text-slate-500">Name:</span>
@@ -430,7 +454,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Top metrics grids */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <GlassCard className="flex items-center gap-4 p-5">
             <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
@@ -473,9 +496,7 @@ export default function DashboardPage() {
           </GlassCard>
         </div>
 
-        {/* Middle action areas */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Card 1: Live clock in/out */}
           <GlassCard hoverGlow glowColor="cyan" className="lg:col-span-1 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
@@ -486,7 +507,16 @@ export default function DashboardPage() {
                 <span className={`h-2.5 w-2.5 rounded-full ${activeLog? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
               </div>
 
-              <div className="text-center py-6">
+              {activeLog && (
+                <div className="text-center py-4 mb-4">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Elapsed Time</p>
+                  <div className="text-4xl font-extrabold text-cyan-400 glow-text-cyan font-mono">
+                    {formatStopwatch(elapsedTime)}
+                  </div>
+                </div>
+              )}
+
+              <div className="text-center py-4">
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Current Punch Status</p>
                 {activeLog? (
                   <div className="mt-2">
@@ -494,7 +524,7 @@ export default function DashboardPage() {
                       CLOCKED IN
                     </span>
                     <p className="text-slate-300 text-sm mt-3">
-                      Punch started at {dayjs(activeLog.check_in).format('hh:mm A')}
+                      Started at {dayjs(activeLog.check_in).format('hh:mm A')}
                     </p>
                   </div>
                 ) : (
@@ -512,7 +542,7 @@ export default function DashboardPage() {
               {activeLog && (
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Shift Notes (Optional)
+                    Shift Notes (Required)
                   </label>
                   <textarea
                     rows={2}
@@ -526,7 +556,7 @@ export default function DashboardPage() {
 
               {activeLog? (
                 <button
-                  onClick={handleClockOut}
+                  onClick={handleClockOutClick}
                   disabled={actionLoading}
                   className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.2)] cursor-pointer"
                 >
@@ -556,7 +586,6 @@ export default function DashboardPage() {
             </div>
           </GlassCard>
 
-          {/* Card 2: Manual Entry */}
           <GlassCard hoverGlow glowColor="violet" className="lg:col-span-1">
             <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
               <PlusCircle className="h-5 w-5 text-violet-400" />
@@ -633,7 +662,6 @@ export default function DashboardPage() {
             </form>
           </GlassCard>
 
-          {/* Card 3: Export - FIXED glowColor */}
           <GlassCard hoverGlow glowColor="cyan" className="lg:col-span-1 flex flex-col justify-between">
             <div>
               <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
@@ -658,7 +686,6 @@ export default function DashboardPage() {
           </GlassCard>
         </div>
 
-        {/* Bottom: Log History */}
         <GlassCard>
           <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
             <h2 className="font-bold text-lg text-slate-200 flex items-center gap-2">
@@ -729,6 +756,66 @@ export default function DashboardPage() {
           )}
         </GlassCard>
       </main>
+
+      {showNotesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <GlassCard className="w-full max-w-md p-6 relative">
+            <button
+              onClick={() => setShowNotesModal(false)}
+              className="absolute top-4 right-4 p-1 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-200">Notes Required</h3>
+            </div>
+
+            <p className="text-slate-400 text-sm mb-4">
+              Please add notes about your work before clocking out. This helps track what you accomplished.
+            </p>
+
+            <div className="space-y-1.5 mb-4">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Shift Notes
+              </label>
+              <textarea
+                rows={4}
+                placeholder="What did you work on today?"
+                value={clockNotes}
+                onChange={(e) => setClockNotes(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowNotesModal(false)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClockOut}
+                disabled={!clockNotes.trim() || actionLoading}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionLoading? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Square className="h-4 w-4 fill-white" /> Clock Out
+                  </>
+                )}
+              </button>
+            </div>
+          </GlassCard>
+        </div>
+      )}
     </div>
   );
 }
