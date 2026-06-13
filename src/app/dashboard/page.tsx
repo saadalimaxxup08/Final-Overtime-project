@@ -112,10 +112,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-       .from('overtime_logs')
-       .select('*')
-       .eq('emp_id', profile.emp_id)
-       .order('date', { ascending: false });
+     .from('overtime_logs')
+     .select('*')
+     .eq('emp_id', profile.emp_id)
+     .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -179,8 +179,8 @@ export default function DashboardPage() {
       const nowIso = dayjs().toISOString();
 
       const { data, error } = await supabase
-       .from('overtime_logs')
-       .insert({
+     .from('overtime_logs')
+     .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -190,8 +190,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-       .select()
-       .single();
+     .select()
+     .single();
 
       if (error) throw error;
 
@@ -227,14 +227,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-       .from('overtime_logs')
-       .update({
+     .from('overtime_logs')
+     .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-       .eq('id', activeLog.id);
+     .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -454,48 +454,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <GlassCard className="flex items-center gap-4 p-5">
-            <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-              <FileSpreadsheet className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Logs</p>
-              <h3 className="text-2xl font-bold text-slate-100 mt-1">{totalLogs}</h3>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="flex items-center gap-4 p-5">
-            <div className="p-3.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
-              <Clock className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Hours</p>
-              <h3 className="text-2xl font-bold text-slate-100 mt-1">{totalHours.toFixed(2)}h</h3>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="flex items-center gap-4 p-5">
-            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <TrendingUp className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Overtime Hours</p>
-              <h3 className="text-2xl font-bold text-emerald-400 glow-text-emerald mt-1">{totalOvertime.toFixed(2)}h</h3>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="flex items-center gap-4 p-5">
-            <div className="p-3.5 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400">
-              <Briefcase className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Average Hours/Day</p>
-              <h3 className="text-2xl font-bold text-slate-100 mt-1">{avgHours}h</h3>
-            </div>
-          </GlassCard>
-        </div>
-
+        {/* CLOCK PUNCHER MOVED TO TOP */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <GlassCard hoverGlow glowColor="cyan" className="lg:col-span-1 flex flex-col justify-between">
             <div>
@@ -507,14 +466,13 @@ export default function DashboardPage() {
                 <span className={`h-2.5 w-2.5 rounded-full ${activeLog? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
               </div>
 
-              {activeLog && (
-                <div className="text-center py-4 mb-4">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Elapsed Time</p>
-                  <div className="text-4xl font-extrabold text-cyan-400 glow-text-cyan font-mono">
-                    {formatStopwatch(elapsedTime)}
-                  </div>
+              {/* Stopwatch - Always visible, shows 00:00:00 when not active */}
+              <div className="text-center py-4 mb-4">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Elapsed Time</p>
+                <div className="text-4xl font-extrabold text-cyan-400 glow-text-cyan font-mono">
+                  {formatStopwatch(elapsedTime)}
                 </div>
-              )}
+              </div>
 
               <div className="text-center py-4">
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Current Punch Status</p>
@@ -683,6 +641,49 @@ export default function DashboardPage() {
             >
               <FileText className="h-4 w-4" /> Download PDF Report
             </button>
+          </GlassCard>
+        </div>
+
+        {/* METRICS MOVED BELOW */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <GlassCard className="flex items-center gap-4 p-5">
+            <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+              <FileSpreadsheet className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Logs</p>
+              <h3 className="text-2xl font-bold text-slate-100 mt-1">{totalLogs}</h3>
+            </div>
+          </GlassCard>
+
+          <GlassCard className="flex items-center gap-4 p-5">
+            <div className="p-3.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
+              <Clock className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Hours</p>
+              <h3 className="text-2xl font-bold text-slate-100 mt-1">{totalHours.toFixed(2)}h</h3>
+            </div>
+          </GlassCard>
+
+          <GlassCard className="flex items-center gap-4 p-5">
+            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <TrendingUp className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Overtime Hours</p>
+              <h3 className="text-2xl font-bold text-emerald-400 glow-text-emerald mt-1">{totalOvertime.toFixed(2)}h</h3>
+            </div>
+          </GlassCard>
+
+          <GlassCard className="flex items-center gap-4 p-5">
+            <div className="p-3.5 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400">
+              <Briefcase className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Average Hours/Day</p>
+              <h3 className="text-2xl font-bold text-slate-100 mt-1">{avgHours}h</h3>
+            </div>
           </GlassCard>
         </div>
 
