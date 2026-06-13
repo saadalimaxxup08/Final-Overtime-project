@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { createClient } from '@/utils/supabase/client'; // <-- CHANGE 1: import
+import { createClient } from '@/utils/supabase/client';
 
 interface EmployeeProfile {
   id: string;
@@ -34,7 +34,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const supabase = createClient(); // <-- CHANGE 2: ye line add ki
+  const supabase = createClient();
 
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -88,9 +88,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const handleAuthStateChange = async (currSession: Session | null) => {
-    setLoading(true);
     setSession(currSession);
-    const currUser = currSession?.user?? null;
+    const currUser = currSession?.user ?? null;
     setUser(currUser);
 
     if (currUser) {
@@ -105,13 +104,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(null);
       setIsAdmin(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: initSession } }) => {
-      handleAuthStateChange(initSession);
-    });
+    // FIX: Pehle session load karo, phir listener lagao
+    const initAuth = async () => {
+      setLoading(true);
+      const { data: { session: initSession } } = await supabase.auth.getSession();
+      await handleAuthStateChange(initSession);
+      setLoading(false);
+    };
+
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       handleAuthStateChange(newSession);
@@ -120,19 +124,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase]); // <-- CHANGE 3: dependency me supabase add kiya
+  }, []);
 
   const signOut = async () => {
     setLoading(true);
     try {
       await supabase.auth.signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    } finally {
       setUser(null);
       setSession(null);
       setProfile(null);
       setIsAdmin(false);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
       setLoading(false);
     }
   };
