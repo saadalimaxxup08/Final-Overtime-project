@@ -86,10 +86,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-       .from('overtime_logs')
-       .select('*')
-       .eq('emp_id', profile.emp_id)
-       .order('date', { ascending: false });
+      .from('overtime_logs')
+      .select('*')
+      .eq('emp_id', profile.emp_id)
+      .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -157,8 +157,8 @@ export default function DashboardPage() {
 
       // Insert log
       const { data, error } = await supabase
-       .from('overtime_logs')
-       .insert({
+      .from('overtime_logs')
+      .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -168,8 +168,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-       .select()
-       .single();
+      .select()
+      .single();
 
       if (error) throw error;
 
@@ -194,14 +194,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-       .from('overtime_logs')
-       .update({
+      .from('overtime_logs')
+      .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim() || null,
         })
-       .eq('id', activeLog.id);
+      .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -536,199 +536,4 @@ export default function DashboardPage() {
                     <>
                       <Square className="h-4 w-4 fill-white" /> Clock Out Now
                     </>
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={handleClockIn}
-                  disabled={actionLoading}
-                  className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.2)] cursor-pointer"
-                >
-                  {actionLoading? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 fill-white" /> Clock In Now
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          </GlassCard>
-
-          {/* Card 2: Manual Entry */}
-          <GlassCard hoverGlow glowColor="violet" className="lg:col-span-1">
-            <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
-              <PlusCircle className="h-5 w-5 text-violet-400" />
-              Manual Log Entry
-            </h2>
-
-            <form onSubmit={handleManualSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={manualDate}
-                  onChange={(e) => setManualDate(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 text-xs"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Check In
-                  </label>
-                  <input
-                    type="time"
-                    value={manualCheckIn}
-                    onChange={(e) => setManualCheckIn(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 text-xs"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Check Out
-                  </label>
-                  <input
-                    type="time"
-                    value={manualCheckOut}
-                    onChange={(e) => setManualCheckOut(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Notes (Optional)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Work details..."
-                  value={manualNotes}
-                  onChange={(e) => setManualNotes(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-violet-500/50 text-xs"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={actionLoading}
-                className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(139,92,246,0.2)] cursor-pointer"
-              >
-                {actionLoading? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <PlusCircle className="h-4 w-4" /> Add Manual Log
-                  </>
-                )}
-              </button>
-            </form>
-          </GlassCard>
-
-          {/* Card 3: Export */}
-          <GlassCard hoverGlow glowColor="emerald" className="lg:col-span-1 flex flex-col justify-between">
-            <div>
-              <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
-                <Download className="h-5 w-5 text-emerald-400" />
-                Export Data
-              </h2>
-
-              <div className="py-4">
-                <p className="text-slate-400 text-sm">
-                  Download all your completed overtime logs as a professional PDF report with totals and breakdown.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleDownloadPDF}
-              disabled={logsLoading || logs.filter(l => l.check_out).length === 0}
-              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.2)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FileText className="h-4 w-4" /> Download PDF Report
-            </button>
-          </GlassCard>
-        </div>
-
-        {/* Bottom: Log History */}
-        <GlassCard>
-          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
-            <h2 className="font-bold text-lg text-slate-200 flex items-center gap-2">
-              <History className="h-5 w-5 text-pink-400" />
-              Log History
-            </h2>
-            <span className="text-xs text-slate-500">{logs.length} entries</span>
-          </div>
-
-          {logsLoading? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
-            </div>
-          ) : logs.length === 0? (
-            <div className="text-center py-8 text-slate-500 text-sm">
-              No logs found. Start by clocking in or adding a manual entry.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-slate-400 text-xs uppercase border-b border-white/5">
-                    <th className="text-left py-3 px-2">Date</th>
-                    <th className="text-left py-3 px-2">Check In</th>
-                    <th className="text-left py-3 px-2">Check Out</th>
-                    <th className="text-left py-3 px-2">Total</th>
-                    <th className="text-left py-3 px-2">Overtime</th>
-                    <th className="text-left py-3 px-2">Notes</th>
-                    <th className="text-right py-3 px-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.map((log) => (
-                    <tr key={log.id} className="border-b border-white/5 hover:bg-slate-900/30 transition-colors">
-                      <td className="py-3 px-2 text-slate-300">
-                        {dayjs(log.date).format('DD MMM YYYY')}
-                      </td>
-                      <td className="py-3 px-2 text-slate-300">
-                        {log.check_in? dayjs(log.check_in).format('hh:mm A') : '-'}
-                      </td>
-                      <td className="py-3 px-2 text-slate-300">
-                        {log.check_out? dayjs(log.check_out).format('hh:mm A') : (
-                          <span className="text-emerald-400 text-xs font-semibold">Active</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-2 text-slate-300 font-semibold">
-                        {log.total_hours.toFixed(2)}h
-                      </td>
-                      <td className="py-3 px-2 text-emerald-400 font-semibold">
-                        {log.overtime_hours.toFixed(2)}h
-                      </td>
-                      <td className="py-3 px-2 text-slate-400 text-xs max-w-xs truncate">
-                        {log.notes || '-'}
-                      </td>
-                      <td className="py-3 px-2 text-right">
-                        <button
-                          onClick={() => handleDeleteLog(log.id)}
-                          className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </GlassCard>
-      </main>
-    </div>
-  );
-}
+     
