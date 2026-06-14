@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { createClient } from '@/utils/supabase/client'; // <-- CHANGE 1: import
+import { createClient } from '@/utils/supabase/client';
 
 interface EmployeeProfile {
   id: string;
@@ -34,7 +34,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const supabase = createClient(); // <-- CHANGE 2: ye line add ki
+  const supabase = createClient();
 
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -88,9 +88,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const handleAuthStateChange = async (currSession: Session | null) => {
-    setLoading(true);
     setSession(currSession);
-    const currUser = currSession?.user?? null;
+    const currUser = currSession?.user ?? null;
     setUser(currUser);
 
     if (currUser) {
@@ -105,22 +104,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(null);
       setIsAdmin(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: initSession } }) => {
-      handleAuthStateChange(initSession);
-    });
+    let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      handleAuthStateChange(newSession);
-    });
+    const initAuth = async () => {
+      try {
+        const { data: { session: initSession } } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          await handleAuthStateChange(initSession);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth init error:', error);
+        if (mounted) setLoading(false);
+      }
+    };
+
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, newSession) => {
+        if (mounted) {
+          setLoading(true);
+          await handleAuthStateChange(newSession);
+          setLoading(false);
+        }
+      }
+    );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase]); // <-- CHANGE 3: dependency me supabase add kiya
+  }, []);
 
   const signOut = async () => {
     setLoading(true);
