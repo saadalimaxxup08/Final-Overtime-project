@@ -9,6 +9,7 @@ interface EmployeeProfile {
   name: string;
   emp_id: string;
   email: string;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -16,6 +17,7 @@ interface AuthContextType {
   profile: EmployeeProfile | null;
   session: Session | null;
   loading: boolean;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -25,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   session: null,
   loading: true,
+  isAdmin: false,
   signOut: async () => {},
   refreshProfile: async () => {},
 });
@@ -42,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -56,13 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Error fetching profile:', error);
         }
         setProfile(null);
+        setIsAdmin(false);
         return;
       }
 
       setProfile(data as EmployeeProfile);
+      // Admin check: Teri email daal di
+      setIsAdmin(data.email === 'saadalimaxxup08@gmail.com' || data.emp_id === 'ADMIN001');
     } catch (err) {
       console.error('Error in fetchProfile:', err);
       setProfile(null);
+      setIsAdmin(false);
     }
   };
 
@@ -100,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await fetchProfile(session.user.id);
         } else {
           setProfile(null);
+          setIsAdmin(false);
         }
         
         setLoading(false);
@@ -115,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setProfile(null);
       setSession(null);
+      setIsAdmin(false);
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -125,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     profile,
     session,
     loading,
+    isAdmin,
     signOut,
     refreshProfile,
   };
