@@ -2,22 +2,19 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from '@/utils/supabase/client';
 
 interface EmployeeProfile {
   id: string;
-  emp_id: string;
   name: string;
+  emp_id: string;
   email: string;
-  role?: string;
-  created_at?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
   profile: EmployeeProfile | null;
-  isAdmin: boolean;
+  session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -25,152 +22,112 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  session: null,
   profile: null,
-  isAdmin: false,
+  session: null,
   loading: true,
   signOut: async () => {},
   refreshProfile: async () => {},
 });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const supabase = createClient();
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const checkAdminStatus = async (userId: string): Promise<boolean> => {
+  const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-       .from('employees')
-       .select('role')
-       .eq('id', userId)
-       .maybeSingle();
+        .from('employees')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
       if (error) {
-        console.error('Error checking admin status:', error);
-        return false;
+        if (error.code !== 'PGRST116') {
+          console.error('Error fetching profile:', error);
+        }
+        setProfile(null);
+        return;
       }
-      return data?.role === 'admin';
-    } catch (err) {
-      console.warn('Admin check failed:', err);
-      return false;
-    }
-  };
 
-  const fetchProfile = async (userId: string): Promise<EmployeeProfile | null> => {
-    try {
-      const { data, error } = await supabase
-       .from('employees')
-       .select('*')
-       .eq('id', userId)
-       .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching employee profile:', error);
-        return null;
-      }
-      return data;
+      setProfile(data as EmployeeProfile);
     } catch (err) {
-      console.error('Profile fetch failed:', err);
-      return null;
+      console.error('Error in fetchProfile:', err);
+      setProfile(null);
     }
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      const prof = await fetchProfile(user.id);
-      setProfile(prof);
-    }
-  };
-
-  const handleAuthStateChange = async (currSession: Session | null) => {
-    setSession(currSession);
-    const currUser = currSession?.user ?? null;
-    setUser(currUser);
-
-    if (currUser) {
-      const [profResult, adminResult] = await Promise.all([
-        fetchProfile(currUser.id),
-        checkAdminStatus(currUser.id),
-      ]);
-
-      setProfile(profResult);
-      setIsAdmin(adminResult);
-    } else {
-      setProfile(null);
-      setIsAdmin(false);
+    if (user?.id) {
+      await fetchProfile(user.id);
     }
   };
 
   useEffect(() => {
-    let mounted = true;
-
     const initAuth = async () => {
       try {
-        const { data: { session: initSession } } = await supabase.auth.getSession();
-        
-        if (mounted) {
-          await handleAuthStateChange(initSession);
-          setLoading(false);
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await fetchProfile(session.user.id);
         }
       } catch (error) {
-        console.error('Auth init error:', error);
-        if (mounted) setLoading(false);
+        console.error('Error initializing auth:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
-        if (mounted) {
-          setLoading(true);
-          await handleAuthStateChange(newSession);
-          setLoading(false);
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
         }
+        
+        setLoading(false);
       }
     );
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signOut = async () => {
-    setLoading(true);
     try {
       await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      setSession(null);
     } catch (error) {
       console.error('Error signing out:', error);
-    } finally {
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      setIsAdmin(false);
-      setLoading(false);
     }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        profile,
-        isAdmin,
-        loading,
-        signOut,
-        refreshProfile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  const value = {
+    user,
+    profile,
+    session,
+    loading,
+    signOut,
+    refreshProfile,
+  };
 
-export const useAuth = () => useContext(AuthContext);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
