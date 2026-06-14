@@ -674,7 +674,7 @@ export default function DashboardPage() {
             </form>
           </GlassCard>
 
-          <GlassCard hoverGlow glowColor="amber" className="lg:col-span-1">
+          <GlassCard hoverGlow glowColor="violet" className="lg:col-span-1">
             <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-amber-400" />
               Summary Stats
