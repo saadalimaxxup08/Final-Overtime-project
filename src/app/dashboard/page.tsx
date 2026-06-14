@@ -47,9 +47,10 @@ export default function DashboardPage() {
   const { showToast } = useToast();
   const router = useRouter();
 
+  // FIX 1: Redirect sirf tab jab loading complete ho aur user null ho
   useEffect(() => {
     if (!loading &&!user) {
-      router.push('/');
+      router.replace('/');
     }
   }, [user, loading, router]);
 
@@ -120,10 +121,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-   .from('overtime_logs')
-   .select('*')
-   .eq('emp_id', profile.emp_id)
-   .order('date', { ascending: false });
+       .from('overtime_logs')
+       .select('*')
+       .eq('emp_id', profile.emp_id)
+       .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -187,8 +188,8 @@ export default function DashboardPage() {
       const nowIso = dayjs().toISOString();
 
       const { data, error } = await supabase
-   .from('overtime_logs')
-   .insert({
+       .from('overtime_logs')
+       .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -198,8 +199,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-   .select()
-   .single();
+       .select()
+       .single();
 
       if (error) throw error;
 
@@ -235,14 +236,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-   .from('overtime_logs')
-   .update({
+       .from('overtime_logs')
+       .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-   .eq('id', activeLog.id);
+       .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -333,15 +334,15 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
 
       const { error } = await supabase
-   .from('overtime_logs')
-   .update({
+       .from('overtime_logs')
+       .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-   .eq('id', editingLog.id);
+       .eq('id', editingLog.id);
 
       if (error) throw error;
 
@@ -395,16 +396,20 @@ export default function DashboardPage() {
   const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
   const avgHours = totalLogs > 0? (totalHours / totalLogs).toFixed(2) : '0.00';
 
+  // FIX 2: Loading ke dauran loader dikhao, redirect mat karo
   if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-[#060911]">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-10 w-10 text-cyan-500 animate-spin" />
-          <p className="text-slate-400 text-sm">Loading dashboard data...</p>
+          <p className="text-slate-400 text-sm">Verifying session...</p>
         </div>
       </div>
     );
   }
+
+  // FIX 3: Agar user nahi hai to null return karo, useEffect redirect kar dega
+  if (!user) return null;
 
   if (user &&!profile) {
     return (
@@ -847,7 +852,8 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">                 <div className="space-y-1.5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Check In
                   </label>
