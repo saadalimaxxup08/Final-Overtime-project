@@ -9,4 +9,11 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true, // Ye add kar - sabse important
+    autoRefreshToken: true, // Token expire hone se pehle refresh
+    detectSessionInUrl: true, // OAuth ke liye
+    storageKey: 'sb-auth-token', // Mobile pe zaroori
+  }
+});
