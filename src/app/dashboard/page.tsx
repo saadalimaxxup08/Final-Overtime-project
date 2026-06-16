@@ -88,11 +88,9 @@ export default function DashboardPage() {
   const [manualCheckOut, setManualCheckOut] = useState('17:00');
   const [manualNotes, setManualNotes] = useState('');
 
-  // NEW: Hourly Rate State
   const [hourlyRate, setHourlyRate] = useState<number>(0);
 
   useEffect(() => {
-    // Load rate from localStorage on mount
     const savedRate = localStorage.getItem('hourlyRate');
     if (savedRate) {
       setHourlyRate(parseFloat(savedRate));
@@ -404,7 +402,7 @@ export default function DashboardPage() {
       employeeName: profile.name,
       empId: profile.emp_id,
       logs: completedLogs,
-      hourlyRate: hourlyRate, // NEW: Pass rate to PDF
+      hourlyRate: hourlyRate,
     });
     showToast('PDF exported successfully!', 'success');
   };
@@ -413,7 +411,7 @@ export default function DashboardPage() {
   const totalHours = logs.reduce((sum, log) => sum + Number(log.total_hours || 0), 0);
   const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
   const avgHours = totalLogs > 0? (totalHours / totalLogs).toFixed(2) : '0.00';
-  const totalAmount = (totalOvertime * hourlyRate).toFixed(2); // NEW: Total Amount Calculation
+  const totalAmount = (totalOvertime * hourlyRate).toFixed(2);
 
   if (loading) {
     return (
@@ -522,7 +520,6 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap justify-end">
-            {/* NEW: Hourly Rate Input */}
             <div className="flex items-center gap-2">
               <span className="text-slate-400 text-sm font-medium">Hourly Rate:</span>
               <div className="relative">
@@ -736,7 +733,6 @@ export default function DashboardPage() {
                 <span className="text-slate-400 text-sm">Avg Hours/Day</span>
                 <span className="text-emerald-400 font-bold text-lg">{avgHours}</span>
               </div>
-              {/* NEW: Total Amount */}
               <div className="flex justify-between items-center pt-2 border-t border-white/5">
                 <span className="text-slate-400 text-sm">Total Amount</span>
                 <span className="text-emerald-400 font-bold text-xl">Rs {totalAmount}</span>
@@ -844,8 +840,7 @@ export default function DashboardPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <p className="text-slate-400 text-sm mb
-                        <p className="text-slate-400 text-sm mb-4">
+            <p className="text-slate-400 text-sm mb-4">
               Please describe what you accomplished during this shift before clocking out.
             </p>
             <textarea
@@ -853,7 +848,7 @@ export default function DashboardPage() {
               placeholder="Enter your shift notes..."
               value={clockNotes}
               onChange={(e) => setClockNotes(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm mb-4"
+              className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/              className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm mb-4"
               autoFocus
             />
             <div className="flex gap-3">
