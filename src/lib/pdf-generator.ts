@@ -16,6 +16,7 @@ interface PDFGeneratorParams {
   empId: string;
   logs: OvertimeLog[];
   monthName?: string; // Optional: e.g. "June 2026"
+  hourlyRate?: number; // NEW: Hourly rate for amount calculation
 }
 
 export const generateOvertimePDF = ({
@@ -23,6 +24,7 @@ export const generateOvertimePDF = ({
   empId,
   logs,
   monthName,
+  hourlyRate = 0, // NEW: Default 0
 }: PDFGeneratorParams) => {
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -30,7 +32,7 @@ export const generateOvertimePDF = ({
     format: 'a4',
   });
 
-  const titleMonth = monthName ? ` - ${monthName.toUpperCase()}` : '';
+  const titleMonth = monthName? ` - ${monthName.toUpperCase()}` : '';
 
   // Theme colors
   const primaryColor = [15, 23, 42]; // Slate 900
@@ -70,7 +72,7 @@ export const generateOvertimePDF = ({
   // Employee details card
   doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
   doc.roundedRect(14, 32, 182, 18, 2, 2, 'F');
-  
+
   doc.setFont('Helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -89,7 +91,7 @@ export const generateOvertimePDF = ({
   // 2. Table of Logs
   // Prepare Table Data
   const tableHeaders = [['Date', 'Clock In', 'Clock Out', 'Total Hours', 'OT Hours', 'Notes']];
-  
+
   // Sort logs by date ascending
   const sortedLogs = [...logs].sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix());
 
@@ -100,9 +102,9 @@ export const generateOvertimePDF = ({
     accumulatedTotalHours += Number(log.total_hours || 0);
     accumulatedOvertimeHours += Number(log.overtime_hours || 0);
 
-    const clockInStr = log.check_in ? dayjs(log.check_in).format('hh:mm A') : '-';
-    const clockOutStr = log.check_out ? dayjs(log.check_out).format('hh:mm A') : '-';
-    
+    const clockInStr = log.check_in? dayjs(log.check_in).format('hh:mm A') : '-';
+    const clockOutStr = log.check_out? dayjs(log.check_out).format('hh:mm A') : '-';
+
     return [
       dayjs(log.date).format('YYYY-MM-DD'),
       clockInStr,
@@ -112,6 +114,9 @@ export const generateOvertimePDF = ({
       log.notes || '',
     ];
   });
+
+  // NEW: Calculate Total Amount
+  const totalAmount = accumulatedOvertimeHours * hourlyRate;
 
   // Append a summary row
   tableRows.push([
@@ -153,7 +158,7 @@ export const generateOvertimePDF = ({
         data.cell.styles.fontStyle = 'bold';
         data.cell.styles.fillColor = [241, 245, 249]; // Slate 100
         data.cell.styles.textColor = [15, 23, 42]; // Slate 900
-        
+
         if (data.column.index === 3 || data.column.index === 4) {
           data.cell.styles.textColor = [6, 182, 212]; // Cyan for values
         }
@@ -161,13 +166,34 @@ export const generateOvertimePDF = ({
     },
   });
 
+  // NEW: Add Hourly Rate & Total Amount below table
+  const finalY = (doc as any).lastAutoTable.finalY || 120;
+
+  if (hourlyRate > 0) {
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text(`Hourly Rate:`, 14, finalY + 10);
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+    doc.text(`Rs ${hourlyRate.toFixed(2)}`, 45, finalY + 10);
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text(`Total Amount:`, 14, finalY + 16);
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(16, 185, 129); // Emerald 500
+    doc.setFontSize(12);
+    doc.text(`Rs ${totalAmount.toFixed(2)}`, 45, finalY + 16);
+  }
+
   // 3. Footer
   const pageCount = (doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184); // Slate 400
-    
+
     // Line at bottom
     doc.setDrawColor(241, 245, 249);
     doc.line(14, 280, 196, 280);
