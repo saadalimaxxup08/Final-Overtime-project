@@ -27,6 +27,7 @@ import {
   X,
   Edit3,
   Save,
+  DollarSign,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -47,7 +48,6 @@ export default function DashboardPage() {
   const { showToast } = useToast();
   const router = useRouter();
 
-  // FIX 1: Redirect sirf tab jab loading complete ho aur user null ho
   useEffect(() => {
     if (!loading &&!user) {
       router.replace('/');
@@ -87,6 +87,23 @@ export default function DashboardPage() {
   const [manualCheckIn, setManualCheckIn] = useState('09:00');
   const [manualCheckOut, setManualCheckOut] = useState('17:00');
   const [manualNotes, setManualNotes] = useState('');
+
+  // NEW: Hourly Rate State
+  const [hourlyRate, setHourlyRate] = useState<number>(0);
+
+  useEffect(() => {
+    // Load rate from localStorage on mount
+    const savedRate = localStorage.getItem('hourlyRate');
+    if (savedRate) {
+      setHourlyRate(parseFloat(savedRate));
+    }
+  }, []);
+
+  const handleRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    setHourlyRate(value);
+    localStorage.setItem('hourlyRate', value.toString());
+  };
 
   useEffect(() => {
     if (activeLog && activeLog.check_in) {
@@ -387,6 +404,7 @@ export default function DashboardPage() {
       employeeName: profile.name,
       empId: profile.emp_id,
       logs: completedLogs,
+      hourlyRate: hourlyRate, // NEW: Pass rate to PDF
     });
     showToast('PDF exported successfully!', 'success');
   };
@@ -395,8 +413,8 @@ export default function DashboardPage() {
   const totalHours = logs.reduce((sum, log) => sum + Number(log.total_hours || 0), 0);
   const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
   const avgHours = totalLogs > 0? (totalHours / totalLogs).toFixed(2) : '0.00';
+  const totalAmount = (totalOvertime * hourlyRate).toFixed(2); // NEW: Total Amount Calculation
 
-  // FIX 2: Loading ke dauran loader dikhao, redirect mat karo
   if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-[#060911]">
@@ -408,7 +426,6 @@ export default function DashboardPage() {
     );
   }
 
-  // FIX 3: Agar user nahi hai to null return karo, useEffect redirect kar dega
   if (!user) return null;
 
   if (user &&!profile) {
@@ -504,11 +521,28 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-slate-400 text-sm font-medium">Local time:</span>
-            <div className="px-4 py-2 rounded-xl bg-slate-900/60 border border-white/10 text-cyan-400 font-bold text-sm glow-text-cyan flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              {currentTime || '--:--:-- --'}
+          <div className="flex items-center gap-3 flex-wrap justify-end">
+            {/* NEW: Hourly Rate Input */}
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400 text-sm font-medium">Hourly Rate:</span>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-400" />
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={hourlyRate || ''}
+                  onChange={handleRateChange}
+                  className="w-28 pl-9 pr-3 py-2 rounded-xl bg-slate-900/60 border border-white/10 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 text-emerald-400 font-bold text-sm outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-slate-400 text-sm font-medium">Local time:</span>
+              <div className="px-4 py-2 rounded-xl bg-slate-900/60 border border-white/10 text-cyan-400 font-bold text-sm glow-text-cyan flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                {currentTime || '--:--:-- --'}
+              </div>
             </div>
           </div>
         </div>
@@ -702,6 +736,11 @@ export default function DashboardPage() {
                 <span className="text-slate-400 text-sm">Avg Hours/Day</span>
                 <span className="text-emerald-400 font-bold text-lg">{avgHours}</span>
               </div>
+              {/* NEW: Total Amount */}
+              <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                <span className="text-slate-400 text-sm">Total Amount</span>
+                <span className="text-emerald-400 font-bold text-xl">Rs {totalAmount}</span>
+              </div>
             </div>
 
             <button
@@ -805,7 +844,8 @@ export default function DashboardPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <p className="text-slate-400 text-sm mb-4">
+            <p className="text-slate-400 text-sm mb
+                        <p className="text-slate-400 text-sm mb-4">
               Please describe what you accomplished during this shift before clocking out.
             </p>
             <textarea
