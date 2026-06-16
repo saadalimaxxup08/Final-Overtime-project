@@ -661,7 +661,7 @@ export default function DashboardPage() {
                 <button
                   onClick={handleClockOutClick}
                   disabled={actionLoading}
-                  className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(239,68,0.2)] cursor-pointer"
+                  className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.2)] cursor-pointer"
                 >
                   {actionLoading? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -830,4 +830,176 @@ export default function DashboardPage() {
                     <tr key={log.id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="py-3 px-2 text-slate-300">
                         {dayjs(log.date).format('DD MMM YYYY')}
-                      
+                      </td>
+                      <td className="py-3 px-2 text-slate-300">
+                        {log.check_in? dayjs(log.check_in).format('hh:mm A') : '-'}
+                      </td>
+                      <td className="py-3 px-2 text-slate-300">
+                        {log.check_out? (
+                          dayjs(log.check_out).format('hh:mm A')
+                        ) : (
+                          <span className="text-emerald-400 font-semibold">Active</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-2 text-violet-400 font-semibold">
+                        {log.total_hours.toFixed(2)}h
+                      </td>
+                      <td className="py-3 px-2 text-amber-400 font-semibold">
+                        {log.overtime_hours.to                    <td className="py-3 px-2 text-amber-400 font-semibold">
+                        {log.overtime_hours.toFixed(2)}h
+                      </td>
+                      <td className="py-3 px-2 text-slate-400 text-xs max-w-xs truncate">
+                        {log.notes || '-'}
+                      </td>
+                      <td className="py-3 px-2 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEditClick(log)}
+                            disabled={!log.check_out}
+                            className="p-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={log.check_out? 'Edit log' : 'Cannot edit active log'}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteLog(log.id)}
+                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-all"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </GlassCard>
+      </main>
+
+      {showNotesModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <GlassCard className="w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <FileText className="h-5 w-5 text-amber-400" />
+                Add Shift Notes
+              </h3>
+              <button
+                onClick={() => setShowNotesModal(false)}
+                className="p-1 rounded-lg hover:bg-white/10 text-slate-400"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-slate-400 text-sm mb-4">
+              Notes are required before clocking out. What did you accomplish today?
+            </p>
+            <textarea
+              rows={4}
+              placeholder="e.g. Completed project X, Fixed bugs..."
+              value={clockNotes}
+              onChange={(e) => setClockNotes(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-amber-500/50 transition-all text-sm"
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShowNotesModal(false)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClockOut}
+                disabled={!clockNotes.trim() || actionLoading}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : 'Clock Out'}
+              </button>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {showEditModal && editingLog && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <GlassCard className="w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Edit3 className="h-5 w-5 text-cyan-400" />
+                Edit Log
+              </h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-1 rounded-lg hover:bg-white/10 text-slate-400"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-slate-400 text-sm mb-4">
+              {dayjs(editingLog.date).format('DD MMM YYYY')}
+            </p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Check In
+                  </label>
+                  <input
+                    type="time"
+                    value={editCheckIn}
+                    onChange={(e) => setEditCheckIn(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-cyan-500/50 transition-all text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Check Out
+                  </label>
+                  <input
+                    type="time"
+                    value={editCheckOut}
+                    onChange={(e) => setEditCheckOut(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-cyan-500/50 transition-all text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Notes
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Shift notes..."
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                  <>
+                    <Save className="h-4 w-4" /> Save Changes
+                  </>
+                )}
+              </button>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+    </div>
+  );
+}
