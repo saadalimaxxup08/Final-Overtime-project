@@ -827,27 +827,48 @@ export default function DashboardPage() {
           )}
         </GlassCard>
       </main>
-
-      {showNotesModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <GlassCard className="w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-200">Add Shift Notes</h3>
-              <button
-                onClick={() => setShowNotesModal(false)}
-                className="p-1 rounded-lg hover:bg-white/10 text-slate-400"
-              >                    </button>
-            </div>
-            <p className="text-slate-400 text-sm mb-4">
-              Please describe what you accomplished during this shift before clocking out.
-            </p>
-            <textarea
-              rows={4}
-              placeholder="Enter your shift notes..."
-              value={clockNotes}
-              onChange={(e) => setClockNotes(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/              className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm mb-4"
-              autoFocus
+      
+{showNotesModal && (
+  <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <GlassCard className="w-full max-w-md p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-slate-200">Add Shift Notes</h3>
+        <button
+          onClick={() => setShowNotesModal(false)}
+          className="p-1 rounded-lg hover:bg-white/10 text-slate-400"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      <p className="text-slate-400 text-sm mb-4">
+        Please describe what you accomplished during this shift before clocking out.
+      </p>
+      <textarea
+        rows={4}
+        placeholder="Enter your shift notes..."
+        value={clockNotes}
+        onChange={(e) => setClockNotes(e.target.value)}
+        className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm mb-4"
+        autoFocus
+      />
+      <div className="flex gap-3">
+        <button
+          onClick={() => setShowNotesModal(false)}
+          className="flex-1 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-semibold text-sm transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleClockOut}
+          disabled={!clockNotes.trim() || actionLoading}
+          className="flex-1 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Clock Out'}
+        </button>
+      </div>
+    </GlassCard>
+  </div>
+)}
             />
             <div className="flex gap-3">
               <button
