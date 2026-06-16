@@ -161,10 +161,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-     .from('overtime_logs')
-     .select('*')
-     .eq('emp_id', profile.emp_id)
-     .order('date', { ascending: false });
+      .from('overtime_logs')
+      .select('*')
+      .eq('emp_id', profile.emp_id)
+      .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -228,8 +228,8 @@ export default function DashboardPage() {
       const nowIso = dayjs().toISOString();
 
       const { data, error } = await supabase
-     .from('overtime_logs')
-     .insert({
+      .from('overtime_logs')
+      .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -239,8 +239,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-     .select()
-     .single();
+      .select()
+      .single();
 
       if (error) throw error;
 
@@ -276,14 +276,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-     .from('overtime_logs')
-     .update({
+      .from('overtime_logs')
+      .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-     .eq('id', activeLog.id);
+      .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -374,15 +374,15 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
 
       const { error } = await supabase
-     .from('overtime_logs')
-     .update({
+      .from('overtime_logs')
+      .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-     .eq('id', editingLog.id);
+      .eq('id', editingLog.id);
 
       if (error) throw error;
 
@@ -830,22 +830,7 @@ export default function DashboardPage() {
                     <tr key={log.id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="py-3 px-2 text-slate-300">
                         {dayjs(log.date).format('DD MMM YYYY')}
-                      </td>
-                      <td className="py-3 px-2 text-slate-300">
-                        {log.check_in? dayjs(log.check_in).format('hh:mm A') : '-'}
-                      </td>
-                      <td className="py-3 px-2 text-slate-300">
-                        {log.check_out? (
-                          dayjs(log.check_out).format('hh:mm A')
-                        ) : (
-                          <span className="text-emerald-400 font-semibold">Active</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-2 text-violet-400 font-semibold">
-                        {log.total_hours.toFixed(2)}h
-                      </td>
-                      <td className="py-3 px-2 text-amber-400 font-semibold">
-                        {log.overtime_hours.to                      </td>
+                                         </td>
                       <td className="py-3 px-2 text-amber-400 font-semibold">
                         {log.overtime_hours.toFixed(2)}h
                       </td>
