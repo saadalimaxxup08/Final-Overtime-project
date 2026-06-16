@@ -136,10 +136,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-       .from('overtime_logs')
-       .select('*')
-       .eq('emp_id', profile.emp_id)
-       .order('date', { ascending: false });
+      .from('overtime_logs')
+      .select('*')
+      .eq('emp_id', profile.emp_id)
+      .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -203,8 +203,8 @@ export default function DashboardPage() {
       const nowIso = dayjs().toISOString();
 
       const { data, error } = await supabase
-       .from('overtime_logs')
-       .insert({
+      .from('overtime_logs')
+      .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -214,8 +214,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-       .select()
-       .single();
+      .select()
+      .single();
 
       if (error) throw error;
 
@@ -251,14 +251,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-       .from('overtime_logs')
-       .update({
+      .from('overtime_logs')
+      .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-       .eq('id', activeLog.id);
+      .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -349,15 +349,15 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
 
       const { error } = await supabase
-       .from('overtime_logs')
-       .update({
+      .from('overtime_logs')
+      .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-       .eq('id', editingLog.id);
+      .eq('id', editingLog.id);
 
       if (error) throw error;
 
@@ -538,7 +538,7 @@ export default function DashboardPage() {
               <span className="text-slate-400 text-sm font-medium">Local time:</span>
               <div className="px-4 py-2 rounded-xl bg-slate-900/60 border border-white/10 text-cyan-400 font-bold text-sm glow-text-cyan flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                {currentTime || '--:--:-- --'}
+                {currentTime || '--:-- --'}
               </div>
             </div>
           </div>
@@ -827,48 +827,28 @@ export default function DashboardPage() {
           )}
         </GlassCard>
       </main>
-      
-{showNotesModal && (
-  <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <GlassCard className="w-full max-w-md p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-slate-200">Add Shift Notes</h3>
-        <button
-          onClick={() => setShowNotesModal(false)}
-          className="p-1 rounded-lg hover:bg-white/10 text-slate-400"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-      <p className="text-slate-400 text-sm mb-4">
-        Please describe what you accomplished during this shift before clocking out.
-      </p>
-      <textarea
-        rows={4}
-        placeholder="Enter your shift notes..."
-        value={clockNotes}
-        onChange={(e) => setClockNotes(e.target.value)}
-        className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm mb-4"
-        autoFocus
-      />
-      <div className="flex gap-3">
-        <button
-          onClick={() => setShowNotesModal(false)}
-          className="flex-1 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-semibold text-sm transition-all"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleClockOut}
-          disabled={!clockNotes.trim() || actionLoading}
-          className="flex-1 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Clock Out'}
-        </button>
-      </div>
-    </GlassCard>
-  </div>
-)}
+
+      {showNotesModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <GlassCard className="w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-200">Add Shift Notes</h3>
+              <button
+                onClick={() => setShowNotesModal(false)}
+                className="p-1 rounded-lg hover:bg-white/10 text-slate-400"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-slate-400 text-sm mb-4">
+              Please describe what you accomplished during this shift before clocking out.
+            </p>
+            <textarea
+              rows={4}
+              placeholder="Enter your shift notes..."
+              value={clockNotes}
+              onChange={(e) => setClockNotes(e.target.value)}              className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm mb-4"
+              autoFocus
             />
             <div className="flex gap-3">
               <button
@@ -882,7 +862,7 @@ export default function DashboardPage() {
                 disabled={!clockNotes.trim() || actionLoading}
                 className="flex-1 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : 'Clock Out'}
+                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Clock Out'}
               </button>
             </div>
           </GlassCard>
@@ -928,7 +908,7 @@ export default function DashboardPage() {
                     value={editCheckOut}
                     onChange={(e) => setEditCheckOut(e.target.value)}
                     required
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-cyan-500/50 transition-all text-sm"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border-white/10 text-slate-200 outline-none focus:border-cyan-500/50 transition-all text-sm"
                   />
                 </div>
               </div>
