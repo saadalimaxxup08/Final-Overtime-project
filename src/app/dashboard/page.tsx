@@ -836,9 +836,7 @@ export default function DashboardPage() {
               <button
                 onClick={() => setShowNotesModal(false)}
                 className="p-1 rounded-lg hover:bg-white/10 text-slate-400"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              >                    </button>
             </div>
             <p className="text-slate-400 text-sm mb-4">
               Please describe what you accomplished during this shift before clocking out.
