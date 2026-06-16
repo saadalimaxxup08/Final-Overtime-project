@@ -58,7 +58,6 @@ export default function AdminDashboardPage() {
   const { showToast } = useToast();
   const router = useRouter();
 
-  // Route protection: non-admins are redirected to dashboard
   useEffect(() => {
     if (!loading) {
       if (!user) {
@@ -74,26 +73,21 @@ export default function AdminDashboardPage() {
   const [logs, setLogs] = useState<OvertimeLog[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Selected employee modal state
   const [selectedEmp, setSelectedEmp] = useState<EmployeeStats | null>(null);
 
-  // Fetch admin data (all employees and all logs)
   const fetchData = async () => {
     setDataLoading(true);
     try {
-      // Fetch employees
       const { data: empData, error: empError } = await supabase
-        .from('employees')
-        .select('*');
+       .from('employees')
+       .select('*');
 
       if (empError) throw empError;
 
-      // Fetch overtime logs
       const { data: logData, error: logError } = await supabase
-        .from('overtime_logs')
-        .select('*')
-        .order('date', { ascending: false });
+       .from('overtime_logs')
+       .select('*')
+       .order('date', { ascending: false });
 
       if (logError) throw logError;
 
@@ -112,21 +106,19 @@ export default function AdminDashboardPage() {
     }
   }, [user, isAdmin]);
 
-  // Aggregate stats per employee
   const employeeStatsList: EmployeeStats[] = employees.map((profile) => {
     const empLogs = logs.filter((l) => l.emp_id === profile.emp_id);
-    const completedLogs = empLogs.filter((l) => l.check_out !== null);
-    
+    const completedLogs = empLogs.filter((l) => l.check_out!== null);
+
     const totalLogsCount = completedLogs.length;
     const totalHoursSum = completedLogs.reduce((sum, l) => sum + Number(l.total_hours || 0), 0);
     const totalOvertimeSum = completedLogs.reduce((sum, l) => sum + Number(l.overtime_hours || 0), 0);
-    
-    // Find last active date (latest check_in or created_at)
+
     let lastActive = 'Never';
     if (empLogs.length > 0) {
       const activeTimestamps = empLogs
-        .map((l) => (l.check_in ? dayjs(l.check_in) : dayjs(l.date)))
-        .sort((a, b) => b.unix() - a.unix());
+       .map((l) => (l.check_in? dayjs(l.check_in) : dayjs(l.date)))
+       .sort((a, b) => b.unix() - a.unix());
       lastActive = activeTimestamps[0].format('YYYY-MM-DD hh:mm A');
     }
 
@@ -140,7 +132,6 @@ export default function AdminDashboardPage() {
     };
   });
 
-  // Filter employees by search query (name or emp_id)
   const filteredEmployeeStats = employeeStatsList.filter((emp) => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
@@ -150,9 +141,8 @@ export default function AdminDashboardPage() {
     );
   });
 
-  // Calculate high-level global stats
   const totalEmployeesCount = employees.length;
-  
+
   const startOfMonth = dayjs().startOf('month');
   const endOfMonth = dayjs().endOf('month');
   const totalLogsThisMonth = logs.filter((log) => {
@@ -161,19 +151,17 @@ export default function AdminDashboardPage() {
   }).length;
 
   const totalOvertimeAllUsers = logs
-    .filter((l) => l.check_out !== null)
-    .reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
+   .filter((l) => l.check_out!== null)
+   .reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
 
-  // Active Users Today: distinct emp_id in check_ins matching today
   const todayStr = dayjs().format('YYYY-MM-DD');
   const activeUsersToday = new Set(
     logs.filter((log) => log.date === todayStr).map((log) => log.emp_id)
   ).size;
 
-  // Trigger admin PDF download on behalf of selected employee
   const handleDownloadEmployeePDF = (emp: EmployeeStats) => {
-    const completedLogs = emp.logs.filter((l) => l.check_out !== null);
-    
+    const completedLogs = emp.logs.filter((l) => l.check_out!== null);
+
     if (completedLogs.length === 0) {
       showToast(`No completed logs available for ${emp.profile.name}.`, 'warning');
       return;
@@ -183,11 +171,14 @@ export default function AdminDashboardPage() {
       employeeName: emp.profile.name,
       empId: emp.profile.emp_id,
       logs: completedLogs,
+      hourlyRate: 0,
+      currencySymbol: 'Rs',
+      currencyCode: 'PKR',
     });
     showToast(`PDF exported for ${emp.profile.name}.`, 'success');
   };
 
-  if (loading || !isAdmin) {
+  if (loading ||!isAdmin) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-[#060911]">
         <div className="flex flex-col items-center gap-3">
@@ -203,8 +194,7 @@ export default function AdminDashboardPage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
-        {/* Top welcome banner */}
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/5 pb-6">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
@@ -217,7 +207,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Global Statistics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <GlassCard className="flex items-center gap-4 p-5">
             <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
@@ -262,7 +251,6 @@ export default function AdminDashboardPage() {
           </GlassCard>
         </div>
 
-        {/* Directory & Search */}
         <GlassCard className="w-full">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-white/5 pb-4 mb-6 gap-4">
             <div>
@@ -270,7 +258,6 @@ export default function AdminDashboardPage() {
               <p className="text-xs text-slate-400">Search and audit employee clock activity</p>
             </div>
 
-            {/* Search Input */}
             <div className="relative max-w-sm w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
               <input
@@ -283,12 +270,12 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {dataLoading ? (
+          {dataLoading? (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
               <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
               <span className="text-sm">Synthesizing database records...</span>
             </div>
-          ) : filteredEmployeeStats.length === 0 ? (
+          ) : filteredEmployeeStats.length === 0? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Users className="h-12 w-12 text-slate-600 mb-4" />
               <h3 className="font-semibold text-slate-300">No employees found</h3>
@@ -319,7 +306,7 @@ export default function AdminDashboardPage() {
                       <td className="py-4 text-slate-400">{emp.profile.email}</td>
                       <td className="py-4 text-right">{emp.totalLogs}</td>
                       <td className="py-4 text-right">{emp.totalHours.toFixed(2)}h</td>
-                      <td className={`py-4 text-right font-semibold ${emp.totalOvertime > 0 ? 'text-cyan-400 glow-text-cyan' : 'text-slate-400'}`}>
+                      <td className={`py-4 text-right font-semibold ${emp.totalOvertime > 0? 'text-cyan-400 glow-text-cyan' : 'text-slate-400'}`}>
                         {emp.totalOvertime.toFixed(2)}h
                       </td>
                       <td className="py-4 pl-6 text-xs text-slate-400">{emp.lastActive}</td>
@@ -333,7 +320,7 @@ export default function AdminDashboardPage() {
                             <Eye className="h-3.5 w-3.5" />
                             Details
                           </button>
-                          
+
                           <button
                             onClick={() => handleDownloadEmployeePDF(emp)}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer"
@@ -352,13 +339,11 @@ export default function AdminDashboardPage() {
         </GlassCard>
       </main>
 
-      {/* SELECTED EMPLOYEE MODAL */}
       {selectedEmp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-4xl relative z-10 animate-slide-in">
             <GlassCard className="max-h-[85vh] flex flex-col p-6 overflow-hidden">
-              
-              {/* Modal Header */}
+
               <div className="flex items-start justify-between border-b border-white/10 pb-4 mb-4">
                 <div>
                   <h2 className="text-xl font-bold text-slate-100">{selectedEmp.profile.name}</h2>
@@ -366,7 +351,7 @@ export default function AdminDashboardPage() {
                     ID: {selectedEmp.profile.emp_id} | Email: {selectedEmp.profile.email}
                   </p>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleDownloadEmployeePDF(selectedEmp)}
@@ -385,9 +370,8 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Modal Body: Scrollable Logs */}
               <div className="flex-1 overflow-y-auto pr-1">
-                {selectedEmp.logs.length === 0 ? (
+                {selectedEmp.logs.length === 0? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <FileText className="h-10 w-10 text-slate-600 mb-3" />
                     <h3 className="font-semibold text-slate-400">No shift records</h3>
@@ -407,10 +391,10 @@ export default function AdminDashboardPage() {
                     <tbody className="divide-y divide-white/5 text-sm text-slate-300">
                       {selectedEmp.logs.map((log) => {
                         const checkInStr = log.check_in
-                          ? dayjs(log.check_in).format('hh:mm A')
+                         ? dayjs(log.check_in).format('hh:mm A')
                           : '-';
                         const checkOutStr = log.check_out
-                          ? dayjs(log.check_out).format('hh:mm A')
+                         ? dayjs(log.check_out).format('hh:mm A')
                           : (
                             <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-semibold animate-pulse border border-emerald-500/20">
                               Active Shift
@@ -423,10 +407,10 @@ export default function AdminDashboardPage() {
                             <td className="py-3">{checkInStr}</td>
                             <td className="py-3">{checkOutStr}</td>
                             <td className="py-3 text-right font-medium">
-                              {log.check_out ? `${Number(log.total_hours).toFixed(2)}h` : '-'}
+                              {log.check_out? `${Number(log.total_hours).toFixed(2)}h` : '-'}
                             </td>
-                            <td className={`py-3 text-right font-semibold ${log.overtime_hours > 0 ? 'text-cyan-400 glow-text-cyan' : 'text-slate-400'}`}>
-                              {log.check_out ? `${Number(log.overtime_hours).toFixed(2)}h` : '-'}
+                            <td className={`py-3 text-right font-semibold ${log.overtime_hours > 0? 'text-cyan-400 glow-text-cyan' : 'text-slate-400'}`}>
+                              {log.check_out? `${Number(log.overtime_hours).toFixed(2)}h` : '-'}
                             </td>
                             <td className="py-3 pl-6 text-slate-400 text-xs truncate max-w-xs" title={log.notes || ''}>
                               {log.notes || '-'}
@@ -439,13 +423,12 @@ export default function AdminDashboardPage() {
                 )}
               </div>
 
-              {/* Modal Footer */}
               <div className="border-t border-white/10 pt-4 mt-4 flex items-center justify-between text-xs text-slate-400">
                 <div className="flex gap-4">
                   <span>Completed Sessions: <strong className="text-slate-200">{selectedEmp.totalLogs}</strong></span>
                   <span>OT Accumulated: <strong className="text-cyan-400">{selectedEmp.totalOvertime}h</strong></span>
                 </div>
-                
+
                 <button
                   onClick={() => setSelectedEmp(null)}
                   className="px-4 py-2 rounded-lg bg-slate-900 border border-white/10 text-slate-200 font-semibold hover:bg-slate-800 transition-all cursor-pointer"
