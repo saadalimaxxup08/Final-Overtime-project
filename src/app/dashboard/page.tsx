@@ -845,7 +845,8 @@ export default function DashboardPage() {
                         {log.total_hours.toFixed(2)}h
                       </td>
                       <td className="py-3 px-2 text-amber-400 font-semibold">
-                        {log.overtime_hours.to                    <td className="py-3 px-2 text-amber-400 font-semibold">
+                        {log.overtime_hours.to                      </td>
+                      <td className="py-3 px-2 text-amber-400 font-semibold">
                         {log.overtime_hours.toFixed(2)}h
                       </td>
                       <td className="py-3 px-2 text-slate-400 text-xs max-w-xs truncate">
