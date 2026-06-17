@@ -843,7 +843,7 @@ export default function DashboardPage() {
                     <th className="text-left py-3 px-2 text-slate-400 font-semibold">Total</th>
                     <th className="text-left py-3 px-2 text-slate-400 font-semibold">Overtime</th>
                     <th className="text-left py-3 px-2 text-slate-400 font-semibold">Notes</th>
-                                        <th className="text-right py-3 px-2 text-slate-400 font-semibold">Actions</th>
+                    <th className="text-right py-3 px-2 text-slate-400 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
