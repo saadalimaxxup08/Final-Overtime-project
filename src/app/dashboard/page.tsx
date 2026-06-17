@@ -161,10 +161,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-     .from('overtime_logs')
-     .select('*')
-     .eq('emp_id', profile.emp_id)
-     .order('date', { ascending: false });
+      .from('overtime_logs')
+      .select('*')
+      .eq('emp_id', profile.emp_id)
+      .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -228,8 +228,8 @@ export default function DashboardPage() {
       const nowIso = dayjs().toISOString();
 
       const { data, error } = await supabase
-     .from('overtime_logs')
-     .insert({
+      .from('overtime_logs')
+      .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -239,8 +239,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-     .select()
-     .single();
+      .select()
+      .single();
 
       if (error) throw error;
 
@@ -276,14 +276,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-     .from('overtime_logs')
-     .update({
+      .from('overtime_logs')
+      .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-     .eq('id', activeLog.id);
+      .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -374,15 +374,15 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
 
       const { error } = await supabase
-     .from('overtime_logs')
-     .update({
+      .from('overtime_logs')
+      .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-     .eq('id', editingLog.id);
+      .eq('id', editingLog.id);
 
       if (error) throw error;
 
@@ -572,3 +572,421 @@ export default function DashboardPage() {
                         onClick={() => handleCurrencyChange(curr.code)}
                         className={`w-full px-4 py-2.5 text-left hover:bg-white/5 transition-all flex items-center justify-between ${
                           currency === curr.code? 'bg-emerald-500/10 text-emerald-400' : 'text-slate-300'
+                        }`}
+                      >
+                        <span className="text-sm">{curr.name}</span>
+                        <span className="font-bold">{curr.symbol}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-slate-400 text-sm font-medium">Local time:</span>
+              <div className="px-4 py-2 rounded-xl bg-slate-900/60 border border-white/10 text-cyan-400 font-bold text-sm glow-text-cyan flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                {currentTime || '--:-- --'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <GlassCard hoverGlow glowColor="cyan" className="lg:col-span-1 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+                <h2 className="font-bold text-lg text-slate-200 flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-cyan-400" />
+                  Clock Puncher
+                </h2>
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    activeLog? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                  }`}
+                />
+              </div>
+
+              <div className="text-center py-4 mb-4">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
+                  Elapsed Time
+                </p>
+                <div className="text-4xl font-extrabold text-cyan-400 glow-text-cyan font-mono">
+                  {formatStopwatch(elapsedTime)}
+                </div>
+              </div>
+
+              <div className="text-center py-4">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                  Current Punch Status
+                </p>
+                {activeLog? (
+                  <div className="mt-2">
+                    <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+                      CLOCKED IN
+                    </span>
+                    <p className="text-slate-300 text-sm mt-3">
+                      Started at {dayjs(activeLog.check_in).format('hh:mm A')}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-2">
+                    <span className="px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold">
+                      CLOCKED OUT
+                    </span>
+                    <p className="text-slate-500 text-sm mt-3">Ready to record shift hours</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {activeLog && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Shift Notes (Required)
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Enter what you accomplished today..."
+                    value={clockNotes}
+                    onChange={(e) => setClockNotes(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-xs"
+                  />
+                </div>
+              )}
+
+              {activeLog? (
+                <button
+                  onClick={handleClockOutClick}
+                  disabled={actionLoading}
+                  className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.2)] cursor-pointer"
+                >
+                  {actionLoading? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Square className="h-4 w-4 fill-white" /> Clock Out Now
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleClockIn}
+                  disabled={actionLoading}
+                  className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.2)] cursor-pointer"
+                >
+                  {actionLoading? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 fill-white" /> Clock In Now
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </GlassCard>
+
+          <GlassCard hoverGlow glowColor="violet" className="lg:col-span-1">
+            <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
+              <PlusCircle className="h-5 w-5 text-violet-400" />
+              Manual Log Entry
+            </h2>
+
+            <form onSubmit={handleManualSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  value={manualDate}
+                  onChange={(e) => setManualDate(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 transition-all text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Check In
+                  </label>
+                  <input
+                    type="time"
+                    value={manualCheckIn}
+                    onChange={(e) => setManualCheckIn(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 transition-all text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Check Out
+                  </label>
+                  <input
+                    type="time"
+                    value={manualCheckOut}
+                    onChange={(e) => setManualCheckOut(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-violet-500/50 transition-all text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Notes (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Overtime for project X"
+                  value={manualNotes}
+                  onChange={(e) => setManualNotes(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-violet-500/50 transition-all text-sm"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={actionLoading}
+                className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(139,92,246,0.2)] cursor-pointer"
+              >
+                {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Log'}
+              </button>
+            </form>
+          </GlassCard>
+
+          <GlassCard hoverGlow glowColor="violet" className="lg:col-span-1">
+            <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-amber-400" />
+              Summary Stats
+            </h2>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Total Logs</span>
+                <span className="text-cyan-400 font-bold text-lg">{totalLogs}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Total Hours</span>
+                <span className="text-violet-400 font-bold text-lg">{totalHours.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Total Overtime</span>
+                <span className="text-amber-400 font-bold text-lg">{totalOvertime.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Avg Hours/Day</span>
+                <span className="text-emerald-400 font-bold text-lg">{avgHours}</span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                <span className="text-slate-400 text-sm">Total Amount</span>
+                <span className="text-emerald-400 font-bold text-xl">{selectedCurrency.symbol} {totalAmount}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleDownloadPDF}
+              className="w-full mt-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.2)] cursor-pointer"
+            >
+              <Download className="h-4 w-4" /> Export PDF
+            </button>
+          </GlassCard>
+        </div>
+
+        <GlassCard hoverGlow glowColor="cyan">
+          <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
+            <History className="h-5 w-5 text-cyan-400" />
+            History Log
+          </h2>
+
+          {logsLoading? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
+            </div>
+          ) : logs.length === 0? (
+            <div className="text-center py-8 text-slate-500 text-sm">
+              No logs found. Start by clocking in or adding a manual log.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/5">
+                    <th className="text-left py-3 px-2 text-slate-400 font-semibold">Date</th>
+                    <th className="text-left py-3 px-2 text-slate-400 font-semibold">Check In</th>
+                    <th className="text-left py-3 px-2 text-slate-400 font-semibold">Check Out</th>
+                    <th className="text-left py-3 px-2 text-slate-400 font-semibold">Total</th>
+                    <th className="text-left py-3 px-2 text-slate-400 font-semibold">Overtime</th>
+                    <th className="text-left py-3 px-2 text-slate-400 font-semibold">Notes</th>
+                    <th className="text-right py-3 px-2 text-slate-400 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.map((log) => (
+                    <tr key={log.id} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="py-3 px-2 text-slate-300">
+                        {dayjs(log.date).format('DD MMM YYYY')}
+                      </td>
+                      <td className="py-                      </td>
+                      <td className="py-3 px-2 text-amber-400 font-semibold">
+                        {log.overtime_hours.toFixed(2)}h
+                      </td>
+                      <td className="py-3 px-2 text-slate-400 text-xs max-w-xs truncate">
+                        {log.notes || '-'}
+                      </td>
+                      <td className="py-3 px-2 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEditClick(log)}
+                            disabled={!log.check_out}
+                            className="p-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={log.check_out? 'Edit log' : 'Cannot edit active log'}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteLog(log.id)}
+                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-all"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </GlassCard>
+      </main>
+
+      {showNotesModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <GlassCard className="w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <FileText className="h-5 w-5 text-amber-400" />
+                Add Shift Notes
+              </h3>
+              <button
+                onClick={() => setShowNotesModal(false)}
+                className="p-1 rounded-lg hover:bg-white/10 text-slate-400"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-slate-400 text-sm mb-4">
+              Notes are required before clocking out. What did you accomplish today?
+            </p>
+            <textarea
+              rows={4}
+              placeholder="e.g. Completed project X, Fixed bugs..."
+              value={clockNotes}
+              onChange={(e) => setClockNotes(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-amber-500/50 transition-all text-sm"
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShowNotesModal(false)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClockOut}
+                disabled={!clockNotes.trim() || actionLoading}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : 'Clock Out'}
+              </button>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {showEditModal && editingLog && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <GlassCard className="w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Edit3 className="h-5 w-5 text-cyan-400" />
+                Edit Log
+              </h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-1 rounded-lg hover:bg-white/10 text-slate-400"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-slate-400 text-sm mb-4">
+              {dayjs(editingLog.date).format('DD MMM YYYY')}
+            </p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Check In
+                  </label>
+                  <input
+                    type="time"
+                    value={editCheckIn}
+                    onChange={(e) => setEditCheckIn(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-cyan-500/50 transition-all text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Check Out
+                  </label>
+                  <input
+                    type="time"
+                    value={editCheckOut}
+                    onChange={(e) => setEditCheckOut(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 outline-none focus:border-cyan-500/50 transition-all text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Notes
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Shift notes..."
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                  <>
+                    <Save className="h-4 w-4" /> Save Changes
+                  </>
+                )}
+              </button>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+    </div>
+  );
+}
