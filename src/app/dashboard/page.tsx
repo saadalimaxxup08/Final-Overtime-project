@@ -163,10 +163,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-    .from('overtime_logs')
-    .select('*')
-    .eq('emp_id', profile.emp_id)
-    .order('date', { ascending: false });
+   .from('overtime_logs')
+   .select('*')
+   .eq('emp_id', profile.emp_id)
+   .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -230,8 +230,8 @@ export default function DashboardPage() {
       const nowIso = dayjs().toISOString();
 
       const { data, error } = await supabase
-    .from('overtime_logs')
-    .insert({
+   .from('overtime_logs')
+   .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -241,8 +241,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-    .select()
-    .single();
+   .select()
+   .single();
 
       if (error) throw error;
 
@@ -278,14 +278,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-    .from('overtime_logs')
-    .update({
+   .from('overtime_logs')
+   .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-    .eq('id', activeLog.id);
+   .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -376,15 +376,15 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
 
       const { error } = await supabase
-    .from('overtime_logs')
-    .update({
+   .from('overtime_logs')
+   .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-    .eq('id', editingLog.id);
+   .eq('id', editingLog.id);
 
       if (error) throw error;
 
@@ -471,7 +471,7 @@ export default function DashboardPage() {
           </div>
 
           <GlassCard hoverGlow glowColor="violet" className="p-8">
-            <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
+            <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-amber-500/10 border-amber-500/20 text-amber-400 text-xs">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span>
                 To proceed, you must associate your account with an Employee ID and Name. This cannot
@@ -490,7 +490,7 @@ export default function DashboardPage() {
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 text-slate-200 placeholder-slate-500 transition-all duration-300 outline-none text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border-white/10 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 text-slate-200 placeholder-slate-500 transition-all duration-300 outline-none text-sm"
                 />
               </div>
 
@@ -655,7 +655,7 @@ export default function DashboardPage() {
                     placeholder="Enter what you accomplished today..."
                     value={clockNotes}
                     onChange={(e) => setClockNotes(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-xs"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-xs"
                   />
                 </div>
               )}
@@ -844,6 +844,7 @@ export default function DashboardPage() {
                     <th className="text-left py-3 px-2 text-slate-400 font-semibold">Overtime</th>
                     <th className="text-left py-3 px-2 text-slate-400 font-semibold">Notes</th>
                     <th className="text-right py-3 px-2 text-slate-400 font-semibold">Actions</th>
+                    <th className="text-right py-3 px-2 text-slate-400 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -851,6 +852,44 @@ export default function DashboardPage() {
                     <tr key={log.id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="py-3 px-2 text-slate-300">
                         {dayjs(log.date).format('DD MMM YYYY')}
+                      </td>
+                      <td className="py-3 px-2 text-cyan-400 font-semibold">
+                        {log.check_in? dayjs(log.check_in).format('hh:mm A') : '-'}
+                      </td>
+                      <td className="py-3 px-2 text-violet-400 font-semibold">
+                        {log.check_out? dayjs(log.check_out).format('hh:mm A') : 'Active'}
+                      </td>
+                      <td className="py-3 px-2 text-emerald-400 font-bold">
+                        {log.total_hours.toFixed(2)}h
+                      </td>
+                      <td className="py-3 px-2 text-amber-400 font-bold">
+                        {log.overtime_hours.toFixed(2)}h
+                      </td>
+                      <td className="py-3 px-2 text-slate-400 text-xs max-w-xs truncate">
+                        {log.notes || '-'}
+                      </td>
+                      <td className="py-3 px-2 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEditClick(log)}
+                            disabled={!log.check_out}
+                            className="p-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={log.check_out? 'Edit log' : 'Cannot edit active log'}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteLog(log.id)}
+                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-all"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
                       </td>
                       <td className="py-3 px-2 text-cyan-400 font-semibold">
                         {log.check_in? dayjs(log.check_in).format('hh:mm A') : '-'}
