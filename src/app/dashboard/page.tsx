@@ -60,7 +60,7 @@ export default function DashboardPage() {
   const { showToast } = useToast();
   const router = useRouter();
 
-  // CHANGE 1: Show More ke liye state
+  // CHANGE 1: Sirf ye 1 line add ki hai
   const [showAllLogs, setShowAllLogs] = useState(false);
 
   useEffect(() => {
@@ -107,7 +107,7 @@ export default function DashboardPage() {
   const [currency, setCurrency] = useState<string>('PKR');
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
 
-  // CHANGE 2: Sirf 5 logs dikhao ya sab
+  // CHANGE 2: Sirf ye 1 line add ki hai
   const displayedLogs = showAllLogs? logs : logs.slice(0, 5);
 
   useEffect(() => {
@@ -168,10 +168,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-     .from('overtime_logs')
-     .select('*')
-     .eq('emp_id', profile.emp_id)
-     .order('date', { ascending: false });
+    .from('overtime_logs')
+    .select('*')
+    .eq('emp_id', profile.emp_id)
+    .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -235,8 +235,8 @@ export default function DashboardPage() {
       const nowIso = dayjs().toISOString();
 
       const { data, error } = await supabase
-     .from('overtime_logs')
-     .insert({
+    .from('overtime_logs')
+    .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -246,8 +246,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-     .select()
-     .single();
+    .select()
+    .single();
 
       if (error) throw error;
 
@@ -283,14 +283,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-     .from('overtime_logs')
-     .update({
+    .from('overtime_logs')
+    .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-     .eq('id', activeLog.id);
+    .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -381,15 +381,15 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
 
       const { error } = await supabase
-     .from('overtime_logs')
-     .update({
+    .from('overtime_logs')
+    .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-     .eq('id', editingLog.id);
+    .eq('id', editingLog.id);
 
       if (error) throw error;
 
@@ -531,9 +531,10 @@ export default function DashboardPage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/*... Yahan tumhara Clock Puncher, Stats waghera ka code same rahega... */}
+        {/* YAHAN TUMHARA PURA DASHBOARD CODE SAME RAHEGA */}
+        {/* Clock Puncher, Stats Cards, Manual Entry, etc - Sab same */}
 
-        {/* History Log Section - YAHAN CHANGE HAI */}
+        {/* History Log Section - CHANGE 3: Sirf yahan displayedLogs use karo */}
         <GlassCard className="p-6">
           <div className="flex items-center gap-2 mb-6">
             <History className="h-5 w-5 text-cyan-400" />
@@ -551,7 +552,6 @@ export default function DashboardPage() {
             </div>
           ) : (
             <>
-              {/* Table Header */}
               <div className="grid grid-cols-4 gap-4 text-xs text-slate-400 pb-3 border-b border-white/10 mb-3">
                 <div>Date</div>
                 <div>Check In</div>
@@ -559,7 +559,6 @@ export default function DashboardPage() {
                 <div>Total</div>
               </div>
 
-              {/* Logs List - CHANGE 3: displayedLogs use karo */}
               <div className="space-y-3">
                 {displayedLogs.map((log) => (
                   <div key={log.id} className="grid grid-cols-4 gap-4 items-center text-sm py-2 border-b border-white/5 last:border-0">
@@ -585,7 +584,7 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* CHANGE 4: Show More / Show Less Button */}
+              {/* CHANGE 4: Show More Button */}
               {logs.length > 5 && (
                 <button
                   onClick={() => setShowAllLogs(!showAllLogs)}
@@ -608,6 +607,8 @@ export default function DashboardPage() {
           )}
         </GlassCard>
       </main>
+
+      {/* Modals waghera yahan same rahenge */}
     </div>
   );
 }
