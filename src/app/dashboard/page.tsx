@@ -806,8 +806,6 @@ export default function DashboardPage() {
                 <input
                   type="time"
                   value={editCheckIn}
-                  type="time"
-                  value={editCheckIn}
                   onChange={(e) => setEditCheckIn(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-slate-200 transition-all duration-300 outline-none text-sm"
                 />
