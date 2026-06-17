@@ -161,10 +161,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-      .from('overtime_logs')
-      .select('*')
-      .eq('emp_id', profile.emp_id)
-      .order('date', { ascending: false });
+     .from('overtime_logs')
+     .select('*')
+     .eq('emp_id', profile.emp_id)
+     .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -228,8 +228,8 @@ export default function DashboardPage() {
       const nowIso = dayjs().toISOString();
 
       const { data, error } = await supabase
-      .from('overtime_logs')
-      .insert({
+     .from('overtime_logs')
+     .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -239,8 +239,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-      .select()
-      .single();
+     .select()
+     .single();
 
       if (error) throw error;
 
@@ -276,14 +276,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-      .from('overtime_logs')
-      .update({
+     .from('overtime_logs')
+     .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-      .eq('id', activeLog.id);
+     .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -374,15 +374,15 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
 
       const { error } = await supabase
-      .from('overtime_logs')
-      .update({
+     .from('overtime_logs')
+     .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-      .eq('id', editingLog.id);
+     .eq('id', editingLog.id);
 
       if (error) throw error;
 
@@ -571,4 +571,4 @@ export default function DashboardPage() {
                         key={curr.code}
                         onClick={() => handleCurrencyChange(curr.code)}
                         className={`w-full px-4 py-2.5 text-left hover:bg-white/5 transition-all flex items-center justify-between ${
-                          currency === curr.code? 'bg-emerald-500/10 text-emerald-400' : 'text-sl
+                          currency === curr.code? 'bg-emerald-500/10 text-emerald-400' : 'text-slate-300'
