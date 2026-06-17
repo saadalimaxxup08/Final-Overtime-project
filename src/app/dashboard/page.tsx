@@ -28,7 +28,6 @@ import {
   Edit3,
   Save,
   ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -59,8 +58,6 @@ export default function DashboardPage() {
   const { user, profile, loading, refreshProfile } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
-
-  const [showAllLogs, setShowAllLogs] = useState(false);
 
   useEffect(() => {
     if (!loading &&!user) {
@@ -105,8 +102,6 @@ export default function DashboardPage() {
   const [hourlyRate, setHourlyRate] = useState<number>(0);
   const [currency, setCurrency] = useState<string>('PKR');
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
-
-  const displayedLogs = showAllLogs? logs : logs.slice(0, 5);
 
   useEffect(() => {
     const savedRate = localStorage.getItem('hourlyRate');
@@ -166,10 +161,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-   .from('overtime_logs')
-   .select('*')
-   .eq('emp_id', profile.emp_id)
-   .order('date', { ascending: false });
+      .from('overtime_logs')
+      .select('*')
+      .eq('emp_id', profile.emp_id)
+      .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -233,8 +228,8 @@ export default function DashboardPage() {
       const nowIso = dayjs().toISOString();
 
       const { data, error } = await supabase
-   .from('overtime_logs')
-   .insert({
+      .from('overtime_logs')
+      .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -244,8 +239,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-   .select()
-   .single();
+      .select()
+      .single();
 
       if (error) throw error;
 
@@ -281,14 +276,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-   .from('overtime_logs')
-   .update({
+      .from('overtime_logs')
+      .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-   .eq('id', activeLog.id);
+      .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -379,15 +374,15 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
 
       const { error } = await supabase
-   .from('overtime_logs')
-   .update({
+      .from('overtime_logs')
+      .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-   .eq('id', editingLog.id);
+      .eq('id', editingLog.id);
 
       if (error) throw error;
 
@@ -529,328 +524,51 @@ export default function DashboardPage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <GlassCard className="p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-white/5 pb-6">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-white">
+              Welcome Back, <span className="gradient-text">{profile?.name}</span>
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+              <div className="flex items-center gap-1.5 text-sm">
+                <span className="text-slate-500">Name:</span>
+                <span className="text-cyan-400 font-semibold">{profile?.name}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-sm">
+                <span className="text-slate-500">Employee ID:</span>
+                <span className="text-violet-400 font-semibold">{profile?.emp_id}</span>
+              </div>
+            </div>
+
+            <p className="text-slate-400 text-sm mt-3">
+              Verify logs, check work status and export invoices.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap justify-end">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-cyan-400" />
-              <h2 className="text-xl font-bold text-white">Clock Puncher</h2>
-            </div>
-            <div className="text-sm text-slate-400">{currentTime}</div>
-          </div>
-
-          {activeLog? (
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-cyan-400 mb-2">
-                  {formatStopwatch(elapsedTime)}
-                </div>
-                <p className="text-slate-400 text-sm">Clocked in at {dayjs(activeLog.check_in).format('hh:mm A')}</p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Notes (Required for Clock Out)
-                </label>
-                <textarea
-                  value={clockNotes}
-                  onChange={(e) => setClockNotes(e.target.value)}
-                  placeholder="What did you work on today?"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-slate-200 placeholder-slate-500 transition-all duration-300 outline-none text-sm"
-                  rows={3}
-                />
-              </div>
-
-              <button
-                onClick={handleClockOutClick}
-                disabled={actionLoading}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-semibold text-sm transition-all duration-300 shadow-[0_0_15px_rgba(244,63,94,0.2)] hover:shadow-[0_0_20px_rgba(244,63,94,0.4)] disabled:opacity-50"
-              >
-                {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
-                Clock Out
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleClockIn}
-              disabled={actionLoading}
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-semibold text-sm transition-all duration-300 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] disabled:opacity-50"
-            >
-              {actionLoading? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
-              Clock In
-            </button>
-          )}
-        </GlassCard>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <GlassCard className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-cyan-500/10">
-                <Briefcase className="h-5 w-5 text-cyan-400" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">Total Logs</p>
-                <p className="text-xl font-bold text-white">{totalLogs}</p>
-              </div>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-violet-500/10">
-                <Clock className="h-5 w-5 text-violet-400" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">Total Hours</p>
-                <p className="text-xl font-bold text-white">{totalHours.toFixed(1)}</p>
-              </div>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <TrendingUp className="h-5 w-5 text-amber-400" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">Overtime</p>
-                <p className="text-xl font-bold text-white">{totalOvertime.toFixed(1)}</p>
-              </div>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10">
-                <FileSpreadsheet className="h-5 w-5 text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">Amount</p>
-                <p className="text-xl font-bold text-white">{selectedCurrency.symbol}{totalAmount}</p>
-              </div>
-            </div>
-          </GlassCard>
-        </div>
-
-        <GlassCard className="p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <PlusCircle className="h-5 w-5 text-violet-400" />
-            <h2 className="text-xl font-bold text-white">Manual Entry</h2>
-          </div>
-
-          <form onSubmit={handleManualSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</label>
+              <span className="text-slate-400 text-sm font-medium">Hourly Rate:</span>
+              <div className="relative">
+                <button
+                  onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
+                  className="absolute left-0 top-0 bottom-0 px-3 flex items-center gap-1 text-emerald-400 hover:bg-emerald-500/10 rounded-l-xl transition-all z-10"
+                >
+                  <span className="font-bold text-sm">{selectedCurrency.symbol}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </button>
                 <input
-                  type="date"
-                  value={manualDate}
-                  onChange={(e) => setManualDate(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 text-slate-200 transition-all duration-300 outline-none text-sm"
+                  type="number"
+                  placeholder="0"
+                  value={hourlyRate || ''}
+                  onChange={handleRateChange}
+                  className="w-32 pl-14 pr-3 py-2 rounded-xl bg-slate-900/60 border border-white/10 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 text-emerald-400 font-bold text-sm outline-none transition-all"
                 />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Check In</label>
-                <input
-                  type="time"
-                  value={manualCheckIn}
-                  onChange={(e) => setManualCheckIn(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 text-slate-200 transition-all duration-300 outline-none text-sm"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Check Out</label>
-                <input
-                  type="time"
-                  value={manualCheckOut}
-                  onChange={(e) => setManualCheckOut(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 text-slate-200 transition-all duration-300 outline-none text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Notes</label>
-              <textarea
-                value={manualNotes}
-                onChange={(e) => setManualNotes(e.target.value)}
-                placeholder="Optional notes about this entry"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 text-slate-200 placeholder-slate-500 transition-all duration-300 outline-none text-sm"
-                rows={2}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={actionLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-sm transition-all duration-300 shadow-[0_0_15px_rgba(139,92,246,0.2)] hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] disabled:opacity-50"
-            >
-              {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-              Add Manual Entry
-            </button>
-          </form>
-        </GlassCard>
-
-        <GlassCard className="p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <History className="h-5 w-5 text-cyan-400" />
-            <h2 className="text-xl font-bold text-white">History Log</h2>
-          </div>
-
-          {logsLoading? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
-            </div>
-          ) : logs.length === 0? (
-            <div className="text-center py-8 text-slate-500">
-              <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No logs found. Clock in to get started!</p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-4 gap-4 text-xs text-slate-400 pb-3 border-b border-white/10 mb-3">
-                <div>Date</div>
-                <div>Check In</div>
-                <div>Check Out</div>
-                <div>Total</div>
-              </div>
-
-              <div className="space-y-3">
-                {displayedLogs.map((log) => (
-                  <div key={log.id} className="grid grid-cols-4 gap-4 items-center text-sm py-2 border-b border-white/5 last:border-0">
-                    <div className="text-slate-300">
-                      {dayjs(log.date).format('DD MMM YYYY')}
-                    </div>
-                    <div className="text-amber-400 font-semibold">
-                      {log.check_in? dayjs(log.check_in).format('hh:mm A') : '-'}
-                    </div>
-                    <div className="text-slate-400">
-                      {log.check_out? dayjs(log.check_out).format('hh:mm A') : 'Active'}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-cyan-400 font-bold">{log.total_hours}h</span>
+                {showCurrencyDropdown && (
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
+                    {CURRENCIES.map((curr) => (
                       <button
-                        onClick={() => handleEditClick(log)}
-                        className="text-cyan-400 hover:text-cyan-300"
-                      >
-                        <Edit3 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {logs.length > 5 && (
-                <button
-                  onClick={() => setShowAllLogs(!showAllLogs)}
-                  className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500/10 to-violet-500/10 hover:from-cyan-500/20 hover:to-violet-500/20 border border-cyan-500/20 text-cyan-400 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300"
-                >
-                  {showAllLogs? (
-                    <>
-                      <ChevronUp size={18} />
-                      Show Less
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown size={18} />
-                      Show More ({logs.length - 5} more)
-                    </>
-                  )}
-                </button>
-              )}
-            </>
-          )}
-        </GlassCard>
-      </main>
-
-      {showNotesModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <GlassCard className="w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">Add Notes</h3>
-              <button onClick={() => setShowNotesModal(false)} className="text-slate-400 hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <textarea
-              value={clockNotes}
-              onChange={(e) => setClockNotes(e.target.value)}
-              placeholder="What did you work on today?"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-slate-200 placeholder-slate-500 transition-all duration-300 outline-none text-sm mb-4"
-              rows={4}
-            />
-            <button
-              onClick={handleClockOut}
-              disabled={!clockNotes.trim() || actionLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-semibold text-sm transition-all duration-300 disabled:opacity-50"
-            >
-              {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : 'Clock Out'}
-            </button>
-          </GlassCard>
-        </div>
-      )}
-
-      {showEditModal && editingLog && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <GlassCard className="w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">Edit Log</h3>
-              <button onClick={() => setShowEditModal(false)} className="text-slate-400 hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Check In</label>
-                <input
-                  type="time"
-                  value={editCheckIn}
-                  onChange={(e) => setEditCheckIn(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-slate-200 transition-all duration-300 outline-none text-sm"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Check Out</label>
-                <input
-                  type="time"
-                  value={editCheckOut}
-                  onChange={(e) => setEditCheckOut(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-slate-200 transition-all duration-300 outline-none text-sm"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Notes</label>
-                <textarea
-                  value={editNotes}
-                  onChange={(e) => setEditNotes(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900/50 border border-white/10 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-slate-200 placeholder-slate-500 transition-all duration-300 outline-none text-sm"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSaveEdit}
-                  disabled={actionLoading}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold text-sm transition-all duration-300 disabled:opacity-50"
-                >
-                  {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Save
-                </button>
-                <button
-                  onClick={() => handleDeleteLog(editingLog.id)}
-                  className="px-4 py-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 transition-all duration-300"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </GlassCard>
-        </div>
-      )}
-    </div>
-  );
-}
+                        key={curr.code}
+                        onClick={() => handleCurrencyChange(curr.code)}
+                        className={`w-full px-4 py-2.5 text-left hover:bg-white/5 transition-all flex items-center justify-between ${
+                          currency === curr.code? 'bg-emerald-500/10 text-emerald-400' : 'text-sl
