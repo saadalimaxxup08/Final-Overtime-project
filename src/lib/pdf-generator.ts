@@ -93,10 +93,15 @@ export const generateOvertimePDF = ({
       4: { cellWidth: 22, halign: 'right' },
       5: { cellWidth: 'auto' },
     },
-    margin: { left: 14, right: 14 },
+    margin: { left: 14, right: 14, bottom: 50 },
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  let finalY = (doc as any).lastAutoTable.finalY + 10;
+
+  if (finalY > 240) {
+    doc.addPage();
+    finalY = 20;
+  }
 
   doc.setFillColor(236, 254, 255);
   doc.setDrawColor(6, 182, 212);
@@ -129,15 +134,19 @@ export const generateOvertimePDF = ({
   doc.setFont('helvetica', 'bold');
   doc.text(`${safeCurrencyText} ${totalAmount.toFixed(2)}`, 124, finalY + 24);
 
-  doc.setFontSize(8);
-  doc.setTextColor(156, 163, 175);
-  doc.setFont('helvetica', 'normal');
-  doc.text(
-    'This is a computer-generated document. No signature required.',
-    14,
-    285
-  );
-  doc.text(`Page 1 of 1`, 196, 285, { align: 'right' });
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(156, 163, 175);
+    doc.setFont('helvetica', 'normal');
+    doc.text(
+      'This is a computer-generated document. No signature required.',
+      14,
+      285
+    );
+    doc.text(`Page ${i} of ${pageCount}`, 196, 285, { align: 'right' });
+  }
 
   doc.save(`Overtime_${empId}_${dayjs().format('YYYY-MM-DD')}.pdf`);
 };
