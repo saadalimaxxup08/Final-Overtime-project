@@ -28,6 +28,7 @@ import {
   Edit3,
   Save,
   ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -84,6 +85,7 @@ export default function DashboardPage() {
   const [clockNotes, setClockNotes] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showAllLogs, setShowAllLogs] = useState(false);
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingLog, setEditingLog] = useState<OvertimeLog | null>(null);
@@ -161,10 +163,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-      .from('overtime_logs')
-      .select('*')
-      .eq('emp_id', profile.emp_id)
-      .order('date', { ascending: false });
+    .from('overtime_logs')
+    .select('*')
+    .eq('emp_id', profile.emp_id)
+    .order('date', { ascending: false });
 
       if (error) throw error;
 
@@ -228,8 +230,8 @@ export default function DashboardPage() {
       const nowIso = dayjs().toISOString();
 
       const { data, error } = await supabase
-      .from('overtime_logs')
-      .insert({
+    .from('overtime_logs')
+    .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -239,8 +241,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-      .select()
-      .single();
+    .select()
+    .single();
 
       if (error) throw error;
 
@@ -276,14 +278,14 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
 
       const { error } = await supabase
-      .from('overtime_logs')
-      .update({
+    .from('overtime_logs')
+    .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-      .eq('id', activeLog.id);
+    .eq('id', activeLog.id);
 
       if (error) throw error;
 
@@ -374,15 +376,15 @@ export default function DashboardPage() {
       const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
 
       const { error } = await supabase
-      .from('overtime_logs')
-      .update({
+    .from('overtime_logs')
+    .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-      .eq('id', editingLog.id);
+    .eq('id', editingLog.id);
 
       if (error) throw error;
 
@@ -439,6 +441,7 @@ export default function DashboardPage() {
   const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
   const avgHours = totalLogs > 0? (totalHours / totalLogs).toFixed(2) : '0.00';
   const totalAmount = (totalOvertime * hourlyRate).toFixed(2);
+  const displayedLogs = showAllLogs? logs : logs.slice(0, 5);
 
   if (loading) {
     return (
@@ -798,10 +801,28 @@ export default function DashboardPage() {
         </div>
 
         <GlassCard hoverGlow glowColor="cyan">
-          <h2 className="font-bold text-lg text-slate-200 border-b border-white/5 pb-4 mb-4 flex items-center gap-2">
-            <History className="h-5 w-5 text-cyan-400" />
-            History Log
-          </h2>
+          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+            <h2 className="font-bold text-lg text-slate-200 flex items-center gap-2">
+              <History className="h-5 w-5 text-cyan-400" />
+              History Log
+            </h2>
+            {logs.length > 5 && (
+              <button
+                onClick={() => setShowAllLogs(!showAllLogs)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-xs font-semibold transition-all"
+              >
+                {showAllLogs? (
+                  <>
+                    <ChevronUp className="h-3 w-3" /> Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3 w-3" /> Show All ({logs.length})
+                  </>
+                )}
+              </button>
+            )}
+          </div>
 
           {logsLoading? (
             <div className="flex items-center justify-center py-8">
@@ -822,16 +843,25 @@ export default function DashboardPage() {
                     <th className="text-left py-3 px-2 text-slate-400 font-semibold">Total</th>
                     <th className="text-left py-3 px-2 text-slate-400 font-semibold">Overtime</th>
                     <th className="text-left py-3 px-2 text-slate-400 font-semibold">Notes</th>
-                    <th className="text-right py-3 px-2 text-slate-400 font-semibold">Actions</th>
+                                        <th className="text-right py-3 px-2 text-slate-400 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => (
+                  {displayedLogs.map((log) => (
                     <tr key={log.id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="py-3 px-2 text-slate-300">
                         {dayjs(log.date).format('DD MMM YYYY')}
-                                            </td>
-                      <td className="py-3 px-2 text-amber-400 font-semibold">
+                      </td>
+                      <td className="py-3 px-2 text-cyan-400 font-semibold">
+                        {log.check_in? dayjs(log.check_in).format('hh:mm A') : '-'}
+                      </td>
+                      <td className="py-3 px-2 text-violet-400 font-semibold">
+                        {log.check_out? dayjs(log.check_out).format('hh:mm A') : 'Active'}
+                      </td>
+                      <td className="py-3 px-2 text-emerald-400 font-bold">
+                        {log.total_hours.toFixed(2)}h
+                      </td>
+                      <td className="py-3 px-2 text-amber-400 font-bold">
                         {log.overtime_hours.toFixed(2)}h
                       </td>
                       <td className="py-3 px-2 text-slate-400 text-xs max-w-xs truncate">
@@ -963,7 +993,6 @@ export default function DashboardPage() {
                   className="w-full px-3 py-2 rounded-xl bg-slate-900/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 transition-all text-sm"
                 />
               </div>
-            </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowEditModal(false)}
