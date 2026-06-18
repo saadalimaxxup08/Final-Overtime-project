@@ -55,7 +55,7 @@ export default function DashboardPage() {
   const { showToast } = useToast();
   const router = useRouter();
   useEffect(() => {
-    if (!loading &&!user) {
+    if (!loading && !user) {
       router.replace('/');
     }
   }, [user, loading, router]);
@@ -142,14 +142,14 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-     .from('overtime_logs')
-     .select('*')
-     .eq('emp_id', profile.emp_id)
-     .order('date', { ascending: false });
+        .from('overtime_logs')
+        .select('*')
+        .eq('emp_id', profile.emp_id)
+        .order('date', { ascending: false });
       if (error) throw error;
       const typedLogs = (data || []) as OvertimeLog[];
       setLogs(typedLogs);
-      const active = typedLogs.find((log) =>!log.check_out);
+      const active = typedLogs.find((log) => !log.check_out);
       setActiveLog(active || null);
     } catch (err: any) {
       showToast(err.message || 'Error loading logs.', 'error');
@@ -164,8 +164,8 @@ export default function DashboardPage() {
   }, [profile]);
   const handleCreateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user ||!user.email) return;
-    if (!profileName.trim() ||!profileEmpId.trim()) {
+    if (!user || !user.email) return;
+    if (!profileName.trim() || !profileEmpId.trim()) {
       showToast('Please enter both Name and Employee ID.', 'warning');
       return;
     }
@@ -198,8 +198,8 @@ export default function DashboardPage() {
       const todayStr = dayjs().format('YYYY-MM-DD');
       const nowIso = dayjs().toISOString();
       const { data, error } = await supabase
-     .from('overtime_logs')
-     .insert({
+        .from('overtime_logs')
+        .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -209,8 +209,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-     .select()
-     .single();
+        .select()
+        .single();
       if (error) throw error;
       showToast('Clocked in successfully!', 'success');
       setActiveLog(data as OvertimeLog);
@@ -231,7 +231,7 @@ export default function DashboardPage() {
     handleClockOut();
   };
   const handleClockOut = async () => {
-    if (!profile ||!activeLog) return;
+    if (!profile || !activeLog) return;
     setActionLoading(true);
     try {
       const nowIso = dayjs().toISOString();
@@ -240,14 +240,14 @@ export default function DashboardPage() {
       const totalHours = dayjs(nowIso).diff(dayjs(checkInIso), 'hour', true);
       const overtimeHours = totalHours; // 8 ghante wala rule khatam
       const { error } = await supabase
-     .from('overtime_logs')
-     .update({
+        .from('overtime_logs')
+        .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-     .eq('id', activeLog.id);
+        .eq('id', activeLog.id);
       if (error) throw error;
       confetti({
         particleCount: 120,
@@ -302,14 +302,14 @@ export default function DashboardPage() {
   };
   const handleEditClick = (log: OvertimeLog) => {
     setEditingLog(log);
-    setEditCheckIn(log.check_in? dayjs(log.check_in).format('HH:mm') : '');
-    setEditCheckOut(log.check_out? dayjs(log.check_out).format('HH:mm') : '');
+    setEditCheckIn(log.check_in ? dayjs(log.check_in).format('HH:mm') : '');
+    setEditCheckOut(log.check_out ? dayjs(log.check_out).format('HH:mm') : '');
     setEditNotes(log.notes || '');
     setShowEditModal(true);
   };
   const handleSaveEdit = async () => {
-    if (!editingLog ||!profile) return;
-    if (!editCheckIn ||!editCheckOut) {
+    if (!editingLog || !profile) return;
+    if (!editCheckIn || !editCheckOut) {
       showToast('Both check-in and check-out times are required', 'error');
       return;
     }
@@ -325,15 +325,15 @@ export default function DashboardPage() {
       const totalHours = dayjs(checkOutDateTime).diff(dayjs(checkInDateTime), 'hour', true);
       const overtimeHours = totalHours; // 8 ghante wala rule khatam
       const { error } = await supabase
-     .from('overtime_logs')
-     .update({
+        .from('overtime_logs')
+        .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-     .eq('id', editingLog.id);
+        .eq('id', editingLog.id);
       if (error) throw error;
       showToast('Log updated successfully!', 'success');
       setShowEditModal(false);
@@ -361,7 +361,7 @@ export default function DashboardPage() {
       showToast('No log data available to export.', 'warning');
       return;
     }
-    const completedLogs = logs.filter((l) => l.check_out!== null);
+    const completedLogs = logs.filter((l) => l.check_out !== null);
     if (completedLogs.length === 0) {
       showToast('No completed logs to download.', 'warning');
       return;
@@ -379,9 +379,9 @@ export default function DashboardPage() {
   const totalLogs = logs.filter((l) => l.check_out).length;
   const totalHours = logs.reduce((sum, log) => sum + Number(log.total_hours || 0), 0);
   const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
-  const avgHours = totalLogs > 0? (totalHours / totalLogs).toFixed(2) : '0.00';
+  const avgHours = totalLogs > 0 ? (totalHours / totalLogs).toFixed(2) : '0.00';
   const totalAmount = (totalOvertime * hourlyRate).toFixed(2);
-  const displayedLogs = showAllLogs? logs : logs.slice(0, 5);
+  const displayedLogs = showAllLogs ? logs : logs.slice(0, 5);
   const hasMoreLogs = logs.length > 5;
   if (loading) {
     return (
@@ -394,7 +394,7 @@ export default function DashboardPage() {
     );
   }
   if (!user) return null;
-  if (user &&!profile) {
+  if (user && !profile) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden bg-[#060911]">
         <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-violet-500/10 blur-[120px] pointer-events-none" />
@@ -446,7 +446,7 @@ export default function DashboardPage() {
                 disabled={profileSaving}
                 className="w-full flex items-center justify-center gap-2 py-3 mt-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-sm transition-all duration-300 shadow-[0_0_15px_rgba(139,92,246,0.2)] hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] disabled:opacity-50 transform hover:scale-[1.01]"
               >
-                {profileSaving? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & Continue'}
+                {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & Continue'}
               </button>
             </form>
           </GlassCard>
@@ -497,14 +497,12 @@ export default function DashboardPage() {
                 />
                 {showCurrencyDropdown && (
                   <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
-                {showCurrencyDropdown && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
                     {CURRENCIES.map((curr) => (
                       <button
                         key={curr.code}
                         onClick={() => handleCurrencyChange(curr.code)}
                         className={`w-full px-4 py-2.5 text-left hover:bg-white/5 transition-all flex items-center justify-between ${
-                          currency === curr.code? 'bg-emerald-500/10 text-emerald-400' : 'text-slate-300'
+                          currency === curr.code ? 'bg-emerald-500/10 text-emerald-400' : 'text-slate-300'
                         }`}
                       >
                         <span className="text-sm">{curr.name}</span>
@@ -534,7 +532,7 @@ export default function DashboardPage() {
                 </h2>
                 <span
                   className={`h-2.5 w-2.5 rounded-full ${
-                    activeLog? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                    activeLog ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
                   }`}
                 />
               </div>
@@ -550,7 +548,7 @@ export default function DashboardPage() {
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
                   Current Punch Status
                 </p>
-                {activeLog? (
+                {activeLog ? (
                   <div className="mt-2">
                     <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
                       CLOCKED IN
@@ -584,13 +582,13 @@ export default function DashboardPage() {
                   />
                 </div>
               )}
-              {activeLog? (
+              {activeLog ? (
                 <button
                   onClick={handleClockOutClick}
                   disabled={actionLoading}
                   className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.2)] cursor-pointer"
                 >
-                  {actionLoading? (
+                  {actionLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
@@ -604,7 +602,7 @@ export default function DashboardPage() {
                   disabled={actionLoading}
                   className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.2)] cursor-pointer"
                 >
-                  {actionLoading? (
+                  {actionLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
@@ -676,7 +674,7 @@ export default function DashboardPage() {
                 disabled={actionLoading}
                 className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(139,92,246,0.2)] cursor-pointer"
               >
-                {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Log'}
+                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Log'}
               </button>
             </form>
           </GlassCard>
@@ -727,11 +725,11 @@ export default function DashboardPage() {
               </span>
             )}
           </div>
-          {logsLoading? (
+          {logsLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
             </div>
-          ) : logs.length === 0? (
+          ) : logs.length === 0 ? (
             <div className="text-center py-8 text-slate-500 text-sm">
               No logs found. Start by clocking in or adding a manual log.
             </div>
@@ -777,7 +775,7 @@ export default function DashboardPage() {
                               onClick={() => handleEditClick(log)}
                               disabled={!log.check_out}
                               className="p-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                              title={log.check_out? 'Edit log' : 'Cannot edit active log'}
+                              title={log.check_out ? 'Edit log' : 'Cannot edit active log'}
                             >
                               <Edit3 className="h-4 w-4" />
                             </button>
@@ -850,7 +848,7 @@ export default function DashboardPage() {
                 disabled={!clockNotes.trim() || actionLoading}
                 className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : 'Clock Out'}
+                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Clock Out'}
               </button>
             </div>
           </GlassCard>
@@ -924,7 +922,7 @@ export default function DashboardPage() {
                 disabled={actionLoading}
                 className="flex-1 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {actionLoading? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
                   <>
                     <Save className="h-4 w-4" /> Save Changes
                   </>
