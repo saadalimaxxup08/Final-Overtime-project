@@ -142,10 +142,10 @@ export default function DashboardPage() {
     setLogsLoading(true);
     try {
       const { data, error } = await supabase
-      .from('overtime_logs')
-      .select('*')
-      .eq('emp_id', profile.emp_id)
-      .order('date', { ascending: false });
+     .from('overtime_logs')
+     .select('*')
+     .eq('emp_id', profile.emp_id)
+     .order('date', { ascending: false });
       if (error) throw error;
       const typedLogs = (data || []) as OvertimeLog[];
       setLogs(typedLogs);
@@ -198,8 +198,8 @@ export default function DashboardPage() {
       const todayStr = dayjs().format('YYYY-MM-DD');
       const nowIso = dayjs().toISOString();
       const { data, error } = await supabase
-      .from('overtime_logs')
-      .insert({
+     .from('overtime_logs')
+     .insert({
           emp_id: profile.emp_id,
           employee_name: profile.name,
           date: todayStr,
@@ -209,8 +209,8 @@ export default function DashboardPage() {
           overtime_hours: 0,
           notes: '',
         })
-      .select()
-      .single();
+     .select()
+     .single();
       if (error) throw error;
       showToast('Clocked in successfully!', 'success');
       setActiveLog(data as OvertimeLog);
@@ -236,16 +236,18 @@ export default function DashboardPage() {
     try {
       const nowIso = dayjs().toISOString();
       const checkInIso = activeLog.check_in!;
-      const { totalHours, overtimeHours } = calculateHours(checkInIso, nowIso);
+      // CHANGE 1: Sab hours overtime hain
+      const totalHours = dayjs(nowIso).diff(dayjs(checkInIso), 'hour', true);
+      const overtimeHours = totalHours; // 8 ghante wala rule khatam
       const { error } = await supabase
-      .from('overtime_logs')
-      .update({
+     .from('overtime_logs')
+     .update({
           check_out: nowIso,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: clockNotes.trim(),
         })
-      .eq('id', activeLog.id);
+     .eq('id', activeLog.id);
       if (error) throw error;
       confetti({
         particleCount: 120,
@@ -275,7 +277,9 @@ export default function DashboardPage() {
     }
     setActionLoading(true);
     try {
-      const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
+      // CHANGE 2: Manual entry me bhi sab overtime
+      const totalHours = dayjs(checkOutDateTime).diff(dayjs(checkInDateTime), 'hour', true);
+      const overtimeHours = totalHours; // 8 ghante wala rule khatam
       const { error } = await supabase.from('overtime_logs').insert({
         emp_id: profile.emp_id,
         employee_name: profile.name,
@@ -317,17 +321,19 @@ export default function DashboardPage() {
     }
     setActionLoading(true);
     try {
-      const { totalHours, overtimeHours } = calculateHours(checkInDateTime, checkOutDateTime);
+      // CHANGE 3: Edit me bhi sab overtime
+      const totalHours = dayjs(checkOutDateTime).diff(dayjs(checkInDateTime), 'hour', true);
+      const overtimeHours = totalHours; // 8 ghante wala rule khatam
       const { error } = await supabase
-      .from('overtime_logs')
-      .update({
+     .from('overtime_logs')
+     .update({
           check_in: checkInDateTime,
           check_out: checkOutDateTime,
           total_hours: totalHours,
           overtime_hours: overtimeHours,
           notes: editNotes.trim() || null,
         })
-      .eq('id', editingLog.id);
+     .eq('id', editingLog.id);
       if (error) throw error;
       showToast('Log updated successfully!', 'success');
       setShowEditModal(false);
@@ -375,7 +381,7 @@ export default function DashboardPage() {
   const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
   const avgHours = totalLogs > 0? (totalHours / totalLogs).toFixed(2) : '0.00';
   const totalAmount = (totalOvertime * hourlyRate).toFixed(2);
-  const displayedLogs = showAllLogs ? logs : logs.slice(0, 5);
+  const displayedLogs = showAllLogs? logs : logs.slice(0, 5);
   const hasMoreLogs = logs.length > 5;
   if (loading) {
     return (
@@ -489,6 +495,8 @@ export default function DashboardPage() {
                   onChange={handleRateChange}
                   className="w-32 pl-14 pr-3 py-2 rounded-xl bg-slate-900/60 border border-white/10 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 text-emerald-400 font-bold text-sm outline-none transition-all"
                 />
+                {showCurrencyDropdown && (
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
                 {showCurrencyDropdown && (
                   <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
                     {CURRENCIES.map((curr) => (
@@ -736,8 +744,7 @@ export default function DashboardPage() {
                       <th className="text-left py-3 px-2 text-slate-400 font-semibold">Date</th>
                       <th className="text-left py-3 px-2 text-slate-400 font-semibold">Check In</th>
                       <th className="text-left py-3 px-2 text-slate-400 font-semibold">Check Out</th>
-                      <th className="text-left py-3 px-2 text-slate-400 font-semibold">Total</th>
-                      <th className="text-left py-3 px-2 text-slate-400 font-semibold">Overtime</th>
+                      <th className="text-left py-3 px-2 text-slate-400 font-semibold">Overtime Hours</th>
                       <th className="text-left py-3 px-2 text-slate-400 font-semibold">Notes</th>
                       <th className="text-right py-3 px-2 text-slate-400 font-semibold">Actions</th>
                     </tr>
@@ -757,9 +764,6 @@ export default function DashboardPage() {
                           ) : (
                             <span className="text-emerald-400 font-semibold">Active</span>
                           )}
-                        </td>
-                        <td className="py-3 px-2 text-violet-400 font-semibold">
-                          {log.total_hours.toFixed(2)}h
                         </td>
                         <td className="py-3 px-2 text-amber-400 font-semibold">
                           {log.overtime_hours.toFixed(2)}h
