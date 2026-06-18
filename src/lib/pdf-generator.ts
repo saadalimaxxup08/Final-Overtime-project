@@ -53,22 +53,22 @@ export const generateOvertimePDF = ({
   doc.text(`Currency: ${currencyCode}`, 120, 54);
   doc.text(`Hourly Rate: ${safeCurrencyText} ${hourlyRate.toFixed(2)}`, 120, 59);
 
-  const totalHours = logs.reduce((sum, log) => sum + Number(log.total_hours || 0), 0);
+  // CHANGE: Ab total_hours aur overtime_hours same hain
   const totalOvertime = logs.reduce((sum, log) => sum + Number(log.overtime_hours || 0), 0);
   const totalAmount = totalOvertime * hourlyRate;
 
+  // CHANGE: Table se Total Hours column hataya
   const tableData = logs.map((log) => [
     dayjs(log.date).format('DD MMM YYYY'),
     log.check_in? dayjs(log.check_in).format('hh:mm A') : '-',
     log.check_out? dayjs(log.check_out).format('hh:mm A') : 'Active',
-    Number(log.total_hours).toFixed(2),
-    Number(log.overtime_hours).toFixed(2),
+    Number(log.overtime_hours).toFixed(2), // Sirf Overtime
     log.notes || '-',
   ]);
 
   autoTable(doc, {
     startY: 78,
-    head: [['Date', 'Check In', 'Check Out', 'Total Hours', 'Overtime', 'Notes']],
+    head: [['Date', 'Check In', 'Check Out', 'Overtime Hours', 'Notes']], // Total Hours hata diya
     body: tableData,
     theme: 'grid',
     headStyles: {
@@ -86,12 +86,11 @@ export const generateOvertimePDF = ({
       fillColor: [249, 250, 251],
     },
     columnStyles: {
-      0: { cellWidth: 25 },
-      1: { cellWidth: 25 },
-      2: { cellWidth: 25 },
-      3: { cellWidth: 22, halign: 'right' },
-      4: { cellWidth: 22, halign: 'right' },
-      5: { cellWidth: 'auto' },
+      0: { cellWidth: 30 },
+      1: { cellWidth: 28 },
+      2: { cellWidth: 28 },
+      3: { cellWidth: 30, halign: 'right' }, // Overtime Hours
+      4: { cellWidth: 'auto' },
     },
     margin: { left: 14, right: 14, bottom: 50 },
   });
@@ -106,7 +105,7 @@ export const generateOvertimePDF = ({
   doc.setFillColor(236, 254, 255);
   doc.setDrawColor(6, 182, 212);
   doc.setLineWidth(0.5);
-  doc.roundedRect(14, finalY, 182, 35, 2, 2, 'FD');
+  doc.roundedRect(14, finalY, 182, 30, 2, 2, 'FD'); // Height kam ki kyunki Total Hours nahi hai
 
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
@@ -116,23 +115,22 @@ export const generateOvertimePDF = ({
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(55, 65, 81);
-  doc.text(`Total Working Hours:`, 18, finalY + 14);
-  doc.text(`Total Overtime Hours:`, 18, finalY + 20);
-  doc.text(`Hourly Rate:`, 18, finalY + 26);
+  // CHANGE: Total Working Hours hataya, sirf Overtime rakha
+  doc.text(`Total Overtime Hours:`, 18, finalY + 14);
+  doc.text(`Hourly Rate:`, 18, finalY + 20);
 
   doc.setFont('helvetica', 'bold');
-  doc.text(`${totalHours.toFixed(2)} hrs`, 70, finalY + 14);
-  doc.text(`${totalOvertime.toFixed(2)} hrs`, 70, finalY + 20);
-  doc.text(`${safeCurrencyText} ${hourlyRate.toFixed(2)}`, 70, finalY + 26);
+  doc.text(`${totalOvertime.toFixed(2)} hrs`, 70, finalY + 14);
+  doc.text(`${safeCurrencyText} ${hourlyRate.toFixed(2)}`, 70, finalY + 20);
 
   doc.setFillColor(16, 185, 129);
-  doc.roundedRect(120, finalY + 10, 72, 20, 2, 2, 'F');
+  doc.roundedRect(120, finalY + 8, 72, 18, 2, 2, 'F'); // Position adjust ki
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(9);
-  doc.text('TOTAL AMOUNT', 124, finalY + 16);
+  doc.text('TOTAL AMOUNT', 124, finalY + 14);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${safeCurrencyText} ${totalAmount.toFixed(2)}`, 124, finalY + 24);
+  doc.text(`${safeCurrencyText} ${totalAmount.toFixed(2)}`, 124, finalY + 22);
 
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
